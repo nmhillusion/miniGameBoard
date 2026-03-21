@@ -830,11 +830,16 @@ function render(ts) {
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
 
-  // ── Layer 2: Draw trail cells (permanently visible, fading slightly) ──
+  // ── Layer 2: Draw trail cells (fading out over 10s) ──
   ctx.save();
+  const TRAIL_MAX_AGE = 10000;
   for (const [key, visitTs] of Object.entries(trail)) {
     const age = now - visitTs;
-    const fade = Math.max(0.25, 1 - age / 8000); // fades slowly over 8s, min 25%
+    if (age > TRAIL_MAX_AGE) {
+      delete trail[key]; // Clean up old trail entries
+      continue;
+    }
+    const fade = 1 - age / TRAIL_MAX_AGE;
     const [tr, tc] = key.split(",").map(Number);
     const tx = tc * CELL,
       ty = tr * CELL;
