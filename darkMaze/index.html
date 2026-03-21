@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Maze</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game-root">
+      <div id="hud">
+        <div class="hud-item">
+          <span class="hud-label">Ải</span>
+          <span class="hud-val level" id="h-level">1</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Chạm còn lại</span>
+          <span class="hud-val touches" id="h-touches">5</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Tích lũy</span>
+          <span class="hud-val touches" id="h-bonus">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Sinh mệnh</span>
+          <span class="hud-val status" id="h-lives" style="color: #ff6060">❤️❤️❤️❤️❤️</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Trạng thái</span>
+          <span class="hud-val status" id="h-status">Sẵn sàng</span>
+        </div>
+      </div>
+
+      <div id="canvas-wrap">
+        <canvas id="gc" width="320" height="320"></canvas>
+        <div id="overlay">
+          <h2 id="ov-title">DARK MAZE</h2>
+          <p id="ov-desc">
+            Màn hình tối đen. Chạm để hé lộ mê cung.
+
+            Tránh 💣 và quái vật. Tìm EXIT để thoát!
+
+            Di chuyển để hé lộ đường đi vừa qua.
+          </p>
+          <button class="ov-btn" id="ov-btn">BẮT ĐẦU</button>
+        </div>
+      </div>
+
+      <div id="legend">
+        <div class="leg-item">
+          <div class="leg-dot" style="background: #40ff80"></div>
+          ENTER
+        </div>
+        <div class="leg-item">
+          <div class="leg-dot" style="background: #ff6040"></div>
+          EXIT
+        </div>
+        <div class="leg-item">💣 Bom</div>
+        <div class="leg-item">👾 Quái chậm</div>
+        <div class="leg-item">👹 Quái nhanh</div>
+      </div>
+
+      <div id="controls">
+        <div class="ctrl-btn empty"></div>
+        <div class="ctrl-btn" id="btn-up">▲</div>
+        <div class="ctrl-btn empty"></div>
+        <div class="ctrl-btn" id="btn-left">◀</div>
+        <div class="ctrl-btn" id="btn-down">▼</div>
+        <div class="ctrl-btn" id="btn-right">▶</div>
+        <div class="ctrl-btn empty"></div>
+        <div class="ctrl-btn empty"></div>
+        <div class="ctrl-btn empty"></div>
+      </div>
+      <div id="msg-bar"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

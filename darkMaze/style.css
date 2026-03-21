@@ -1,0 +1,161 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+#game-root {
+  font-family: var(--font-mono, monospace);
+  background: #0a0a0f;
+  color: #e8e8d0;
+  min-height: 520px;
+  padding: 16px;
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  user-select: none;
+}
+#hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: #141420;
+  border-radius: 8px;
+  border: 0.5px solid #2a2a40;
+}
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hud-label {
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hud-val {
+  font-size: 16px;
+  font-weight: 500;
+}
+.hud-val.touches {
+  color: #f0c040;
+}
+.hud-val.level {
+  color: #80c8ff;
+}
+.hud-val.status {
+  color: #80ffb0;
+  font-size: 12px;
+}
+#canvas-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+canvas {
+  display: block;
+  border-radius: 8px;
+  border: 0.5px solid #2a2a40;
+  cursor: pointer;
+  touch-action: none;
+}
+#controls {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 4px;
+  justify-content: center;
+}
+.ctrl-btn {
+  background: #141420;
+  border: 0.5px solid #2a2a40;
+  color: #e8e8d0;
+  font-size: 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+.ctrl-btn:active {
+  background: #2a2a40;
+}
+.ctrl-btn.empty {
+  background: transparent;
+  border-color: transparent;
+  pointer-events: none;
+}
+#msg-bar {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  min-height: 18px;
+}
+.alert {
+  color: #ff8060;
+}
+.success {
+  color: #80ffb0;
+}
+#overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 15, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 8px;
+}
+#overlay h2 {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+#overlay p {
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.ov-btn {
+  background: #1e1e38;
+  border: 0.5px solid #4040a0;
+  color: #80c8ff;
+  padding: 8px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font-mono, monospace);
+}
+.ov-btn:hover {
+  background: #2a2a50;
+}
+#legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #666;
+  padding: 0 4px;
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.leg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
