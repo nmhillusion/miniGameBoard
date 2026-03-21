@@ -141,8 +141,75 @@ function initLevel(lvlIdx, bonusCarry) {
     lastAction: performance.now(),
     blinkTimer: 0,
     isBlinking: false,
+    shakeX: 0,
+    shakeY: 0,
+    shakeTimer: 0,
+    flashColor: "",
+    flashTimer: 0,
+    flashDur: 0,
   };
   updateHUD();
+}
+
+function spawnParticles(x, y, count, type) {
+  if (type === "explosion") {
+    // Fire particles
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 3 + Math.random() * 6;
+      state.particles.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        size: 3 + Math.random() * 5, life: 1.0, decay: 0.02 + Math.random() * 0.03,
+        color: ["#ff4500", "#ff8c00", "#ff0000"][Math.floor(Math.random() * 3)],
+        type: "fire"
+      });
+    }
+    // Smoke particles
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.5 + Math.random() * 2;
+      state.particles.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.5, // float up
+        size: 8 + Math.random() * 12, life: 0.8, decay: 0.01 + Math.random() * 0.015,
+        color: ["#333", "#555", "#222"][Math.floor(Math.random() * 3)],
+        type: "smoke"
+      });
+    }
+    // Sparks/Shrapnel
+    for (let i = 0; i < 15; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 8 + Math.random() * 10;
+      state.particles.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        size: 1 + Math.random() * 2, life: 1.0, decay: 0.04 + Math.random() * 0.06,
+        color: "#fff7e0",
+        type: "spark"
+      });
+    }
+  } else {
+    // Confetti
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      state.particles.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        size: 4 + Math.random() * 4, life: 1.0, decay: 0.015 + Math.random() * 0.02,
+        color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+        type: "confetti"
+      });
+    }
+  }
+}
+
+function flashScreen(color, dur = 300) {
+  state.flashColor = color;
+  state.flashTimer = performance.now() + dur;
+  state.flashDur = dur;
+}
+
+function shakeScreen(dur = 400, intensity = 8) {
+  state.shakeTimer = performance.now() + dur;
+  state.shakeIntensity = intensity;
 }
 
 function resizeCanvas() {
@@ -258,9 +325,16 @@ function movePlayer(dir) {
 
 function checkCollisions() {
   const { player, bombs, monsters, exit } = state;
-  for (const b of bombs)
-    if (b.r === player.r && b.c === player.c) {
-      takeDamage("Dẫm phải bom 💣");
+  const nr = player.r;
+  const nc = player.c;
+  if (state.bombs.some((b) => b.r === nr && b.c === nc)) {
+      const px = state.offsetLeft + (nc + 0.5) * CELL;
+      const py = state.offsetTop + (nr + 0.5) * CELL;
+      spawnParticles(px, py, 60, "explosion");
+      shakeScreen(600, 16);
+      flashScreen("rgba(255, 60, 0, 0.45)", 400);
+      state.emotion = "shocked";
+      takeDamage("Bùm! Bạn giẫm phải bôm!");
       return;
     }
   for (const m of monsters)
@@ -314,6 +388,8 @@ function die(msg) {
 function winLevel() {
   state.won = true;
   state.emotion = "happy";
+  spawnParticles(W / 2, H / 2, 80, "confetti");
+  setMsg("Bạn đã thoát khỏi mê cung!");
   const bonus = state.touches;
   updateHUD();
   const exitX = (state.exit.c + 0.5) * CELL;
@@ -765,9 +841,23 @@ function render(ts) {
   if (!state.alive && !state.isDead) return;
   tickMonsters(ts);
 
+  const now = ts || performance.now();
+  
+  // Screen Shake
+  let sx = 0, sy = 0;
+  if (now < state.shakeTimer) {
+    const progress = (state.shakeTimer - now) / 500; // 500ms approx
+    const intensity = state.shakeIntensity * progress;
+    sx = (Math.random() - 0.5) * intensity;
+    sy = (Math.random() - 0.5) * intensity;
+  }
+
   ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(sx, sy);
+  
   ctx.fillStyle = "#0a0a0f";
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(-Math.abs(sx), -Math.abs(sy), W + Math.abs(sx)*2, H + Math.abs(sy)*2);
 
   const {
     player,
@@ -782,8 +872,6 @@ function render(ts) {
     offsetLeft,
     offsetTop,
   } = state;
-
-  const now = ts || performance.now();
 
   // Smooth Movement (Lerp)
   const lerpSpeed = 0.18;
@@ -991,6 +1079,18 @@ function render(ts) {
     }
     ctx.globalAlpha = 1;
   }
+
+  // ── Layer 9: Screen Flash ──
+  if (now < state.flashTimer) {
+    const flashProg = (state.flashTimer - now) / state.flashDur;
+    ctx.save();
+    ctx.globalAlpha = flashProg;
+    ctx.fillStyle = state.flashColor;
+    ctx.fillRect(-Math.abs(sx), -Math.abs(sy), W + Math.abs(sx)*2, H + Math.abs(sy)*2);
+    ctx.restore();
+  }
+
+  ctx.restore(); // end screen shake
 
   if (animFrame !== null) animFrame = requestAnimationFrame(render);
 }
