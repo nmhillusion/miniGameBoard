@@ -1,10 +1,10 @@
 const canvas = document.getElementById("gc");
 const ctx = canvas.getContext("2d");
-const CELL = 32,
-  COLS = 10,
-  ROWS = 10,
-  W = 320,
-  H = 320;
+const CELL = 32;
+let W = 320;
+let H = 320;
+const SAFE_TOP = 100;
+const SAFE_BOTTOM = 200;
 
 const LEVELS = [
   { touches: 5, bombCount: 3, monsterTypes: [] },
@@ -54,24 +54,32 @@ function mazeGen(cols, rows) {
 }
 
 function initLevel(lvlIdx, bonusCarry) {
+  resizeCanvas(); // Ensure we have latest W/H
+  const cols = Math.floor(W / CELL);
+  const rows = Math.floor((H - SAFE_TOP - SAFE_BOTTOM) / CELL);
+  const offsetTop = SAFE_TOP + (H - SAFE_TOP - SAFE_BOTTOM - rows * CELL) / 2;
+  const offsetLeft = (W - cols * CELL) / 2;
+
   const cfg = LEVELS[Math.min(lvlIdx, LEVELS.length - 1)];
-  const walls = mazeGen(COLS, ROWS);
+  const walls = mazeGen(cols, rows);
 
   // Braiding: Remove more random walls to create better flow and alternative routes
-  const braidAmount = Math.floor(COLS * ROWS * 0.2); // Increased to 20%
+  const braidAmount = Math.floor(cols * rows * 0.2); // Increased to 20%
   for (let i = 0; i < braidAmount; i++) {
-    const r = Math.floor(Math.random() * (ROWS - 1)) + 1;
-    const c = Math.floor(Math.random() * (COLS - 1)) + 1;
+    const r = Math.floor(Math.random() * (rows - 1)) + 1;
+    const c = Math.floor(Math.random() * (cols - 1)) + 1;
     if (Math.random() > 0.5) walls.h[r][c] = false;
     else walls.v[r][c] = false;
   }
   // Ensure Start and Exit area has at least two openings if possible
-  walls.h[1][0] = false;
-  walls.v[0][1] = false;
-  walls.h[ROWS - 1][COLS - 1] = false;
-  walls.v[ROWS - 1][COLS - 1] = false;
+  if (rows > 1 && cols > 1) {
+    walls.h[1][0] = false;
+    walls.v[0][1] = false;
+    walls.h[rows - 1][cols - 1] = false;
+    walls.v[rows - 1][cols - 1] = false;
+  }
 
-  const used = new Set(["0,0", `${ROWS - 1},${COLS - 1}`]);
+  const used = new Set(["0,0", `${rows - 1},${cols - 1}`]);
   let bombs = [];
   let attempts = 0;
 
@@ -80,8 +88,8 @@ function initLevel(lvlIdx, bonusCarry) {
     bombs = [];
     const bombUsed = new Set(used);
     while (bombs.length < cfg.bombCount) {
-      const r = Math.floor(Math.random() * ROWS),
-        c = Math.floor(Math.random() * COLS);
+      const r = Math.floor(Math.random() * rows),
+        c = Math.floor(Math.random() * cols);
       const k = `${r},${c}`;
       if (!bombUsed.has(k)) {
         bombs.push({ r, c });
@@ -89,14 +97,14 @@ function initLevel(lvlIdx, bonusCarry) {
       }
     }
     attempts++;
-  } while (!isSolvable(ROWS, COLS, walls, bombs) && attempts < 50);
+  } while (!isSolvable(rows, cols, walls, bombs) && attempts < 50);
 
   const monsters = [];
   for (const type of cfg.monsterTypes || []) {
     let r, c, k;
     do {
-      r = Math.floor(Math.random() * ROWS);
-      c = Math.floor(Math.random() * COLS);
+      r = Math.floor(Math.random() * rows);
+      c = Math.floor(Math.random() * cols);
       k = `${r},${c}`;
     } while (used.has(k));
     used.add(k);
@@ -106,12 +114,16 @@ function initLevel(lvlIdx, bonusCarry) {
   trail["0,0"] = performance.now(); // start cell always revealed
   state = {
     lvlIdx,
+    cols,
+    rows,
+    offsetTop,
+    offsetLeft,
     walls,
     bombs,
     monsters,
     player: { r: 0, c: 0, visualR: 0, visualC: 0 },
     entry: { r: 0, c: 0 },
-    exit: { r: ROWS - 1, c: COLS - 1 },
+    exit: { r: rows - 1, c: cols - 1 },
     touches: cfg.touches + bonusCarry,
     bonusCarry,
     alive: true,
@@ -132,6 +144,20 @@ function initLevel(lvlIdx, bonusCarry) {
   };
   updateHUD();
 }
+
+function resizeCanvas() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
+}
+
+window.addEventListener("resize", () => {
+  resizeCanvas();
+});
+
+// Initialize canvas size before first level
+resizeCanvas();
 
 function isSolvable(rows, cols, walls, bombs) {
   const bombSet = new Set(bombs.map((b) => `${b.r},${b.c}`));
@@ -190,11 +216,11 @@ function setMsg(txt, cls = "") {
 }
 
 function canMove(r, c, dir) {
-  const { walls } = state;
+  const { walls, rows, cols } = state;
   if (dir === 0) return r > 0 && !walls.h[r][c];
-  if (dir === 1) return r < ROWS - 1 && !walls.h[r + 1][c];
+  if (dir === 1) return r < rows - 1 && !walls.h[r + 1][c];
   if (dir === 2) return c > 0 && !walls.v[r][c];
-  if (dir === 3) return c < COLS - 1 && !walls.v[r][c + 1];
+  if (dir === 3) return c < cols - 1 && !walls.v[r][c + 1];
   return false;
 }
 
@@ -366,8 +392,10 @@ canvas.addEventListener("pointerdown", (e) => {
   const rect = canvas.getBoundingClientRect();
   state.touches--;
   updateHUD();
-  state.revealX = (e.clientX - rect.left) * (W / rect.width);
-  state.revealY = (e.clientY - rect.top) * (H / rect.height);
+  const rawX = (e.clientX - rect.left) * (W / rect.width);
+  const rawY = (e.clientY - rect.top) * (H / rect.height);
+  state.revealX = rawX;
+  state.revealY = rawY;
   state.revealActive = true;
   state.revealTimer = performance.now();
   state.lastAction = performance.now();
@@ -616,8 +644,9 @@ function drawBoyFace(cx, cy, scale, breathScale, isDead, ts, emotion = "worried"
 }
 
 function drawEntryMarker(r, c) {
-  const x = c * CELL,
-    y = r * CELL;
+  const { offsetLeft, offsetTop } = state;
+  const x = offsetLeft + c * CELL,
+    y = offsetTop + r * CELL;
   ctx.fillStyle = "rgba(40,255,100,0.12)";
   ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
   ctx.strokeStyle = "#40ff80";
@@ -646,8 +675,9 @@ function drawEntryMarker(r, c) {
 }
 
 function drawExitMarker(r, c) {
-  const x = c * CELL,
-    y = r * CELL;
+  const { offsetLeft, offsetTop } = state;
+  const x = offsetLeft + c * CELL,
+    y = offsetTop + r * CELL;
   ctx.fillStyle = "rgba(255,80,40,0.13)";
   ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
   ctx.strokeStyle = "#ff6040";
@@ -679,38 +709,40 @@ function drawExitMarker(r, c) {
 }
 
 function drawMazeBase() {
-  const { walls, exit, entry, bombs, monsters } = state;
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++) {
+  const { walls, exit, entry, bombs, monsters, rows, cols, offsetLeft, offsetTop } = state;
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
       ctx.fillStyle = "#141420";
-      ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2);
+      ctx.fillRect(offsetLeft + c * CELL + 1, offsetTop + r * CELL + 1, CELL - 2, CELL - 2);
     }
   ctx.strokeStyle = "#3a3a60";
   ctx.lineWidth = 2;
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++) {
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      const x = offsetLeft + c * CELL;
+      const y = offsetTop + r * CELL;
       if (walls.h[r][c]) {
         ctx.beginPath();
-        ctx.moveTo(c * CELL, r * CELL);
-        ctx.lineTo((c + 1) * CELL, r * CELL);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + CELL, y);
         ctx.stroke();
       }
       if (walls.h[r + 1][c]) {
         ctx.beginPath();
-        ctx.moveTo(c * CELL, (r + 1) * CELL);
-        ctx.lineTo((c + 1) * CELL, (r + 1) * CELL);
+        ctx.moveTo(x, y + CELL);
+        ctx.lineTo(x + CELL, y + CELL);
         ctx.stroke();
       }
       if (walls.v[r][c]) {
         ctx.beginPath();
-        ctx.moveTo(c * CELL, r * CELL);
-        ctx.lineTo(c * CELL, (r + 1) * CELL);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + CELL);
         ctx.stroke();
       }
       if (walls.v[r][c + 1]) {
         ctx.beginPath();
-        ctx.moveTo((c + 1) * CELL, r * CELL);
-        ctx.lineTo((c + 1) * CELL, (r + 1) * CELL);
+        ctx.moveTo(x + CELL, y);
+        ctx.lineTo(x + CELL, y + CELL);
         ctx.stroke();
       }
     }
@@ -720,12 +752,12 @@ function drawMazeBase() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   for (const b of bombs)
-    ctx.fillText("💣", (b.c + 0.5) * CELL, (b.r + 0.5) * CELL);
+    ctx.fillText("💣", offsetLeft + (b.c + 0.5) * CELL, offsetTop + (b.r + 0.5) * CELL);
   for (const m of monsters)
     ctx.fillText(
       m.type === "fast" ? "👹" : "👾",
-      (m.c + 0.5) * CELL,
-      (m.r + 0.5) * CELL,
+      offsetLeft + (m.c + 0.5) * CELL,
+      offsetTop + (m.r + 0.5) * CELL,
     );
 }
 
@@ -747,6 +779,8 @@ function render(ts) {
     isDead,
     particles,
     emotion,
+    offsetLeft,
+    offsetTop,
   } = state;
 
   const now = ts || performance.now();
@@ -756,8 +790,8 @@ function render(ts) {
   player.visualR += (player.r - player.visualR) * lerpSpeed;
   player.visualC += (player.c - player.visualC) * lerpSpeed;
 
-  const px = (player.visualC + 0.5) * CELL,
-    py = (player.visualR + 0.5) * CELL;
+  const px = offsetLeft + (player.visualC + 0.5) * CELL,
+    py = offsetTop + (player.visualR + 0.5) * CELL;
 
   // Dynamic Emotion Detection
   if (state.alive && !state.won && !["shocked", "frustrated", "curious"].includes(state.emotion)) {
@@ -841,8 +875,8 @@ function render(ts) {
     }
     const fade = 1 - age / TRAIL_MAX_AGE;
     const [tr, tc] = key.split(",").map(Number);
-    const tx = tc * CELL,
-      ty = tr * CELL;
+    const tx = offsetLeft + tc * CELL,
+      ty = offsetTop + tr * CELL;
     ctx.globalAlpha = fade;
     // Draw this cell's floor + walls
     ctx.fillStyle = "#141420";
