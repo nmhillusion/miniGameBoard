@@ -28,6 +28,17 @@ html(lang="en")
           span.hud-label Monsters
           span.hud-val.monsters#h-monsters 0
 
+      #legend
+        .leg-item
+          .leg-dot(style="background: #40ff80")
+          |  ENTER
+        .leg-item
+          .leg-dot(style="background: #ff6040")
+          |  EXIT
+        .leg-item 💣 Bom
+        .leg-item 👾 Quái chậm
+        .leg-item 👹 Quái nhanh
+
       #canvas-wrap
         canvas#gc(width="320", height="320")
         #overlay
@@ -39,17 +50,6 @@ html(lang="en")
             br
             | Di chuyển để hé lộ đường đi vừa qua.
           button.ov-btn#ov-btn BẮT ĐẦU
-
-      #legend
-        .leg-item
-          .leg-dot(style="background: #40ff80")
-          |  ENTER
-        .leg-item
-          .leg-dot(style="background: #ff6040")
-          |  EXIT
-        .leg-item 💣 Bom
-        .leg-item 👾 Quái chậm
-        .leg-item 👹 Quái nhanh
 
       #controls
         .ctrl-btn.empty

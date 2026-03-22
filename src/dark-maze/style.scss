@@ -175,7 +175,7 @@ canvas {
 }
 #legend {
   position: absolute;
-  bottom: 190px;
+  top: 60px;
   left: 16px;
   right: 16px;
   z-index: 15;
@@ -192,7 +192,7 @@ canvas {
 }
 @media (max-width: 400px) {
   #legend {
-    bottom: 210px;
+    top: 60px;
     font-size: 9px;
   }
   #controls {
