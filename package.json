@@ -1,0 +1,31 @@
+{
+  "name": "minigameboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.js",
+    "start": "serve dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmhillusion/miniGameBoard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nmhillusion/miniGameBoard/issues"
+  },
+  "homepage": "https://github.com/nmhillusion/miniGameBoard#readme",
+  "devDependencies": {
+    "@nmhillusion/n2ngin-bull-engine": "^2024.3.4",
+    "@types/node": "^25.3.5",
+    "pug": "^3.0.3",
+    "sass": "^1.97.3",
+    "serve": "^14.2.6",
+    "typescript": "^5.9.3"
+  }
+}

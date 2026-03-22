@@ -1,0 +1,65 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Dark Maze
+    link(rel="stylesheet", href="/darkMaze/style.css")
+  body
+    #game-root
+      #hud
+        .hud-item
+          span.hud-label Ải
+          span.hud-val.level#h-level 1
+        .hud-item
+          span.hud-label Chạm còn lại
+          span.hud-val.touches#h-touches 5
+        .hud-item
+          span.hud-label Tích lũy
+          span.hud-val.touches#h-bonus 0
+        .hud-item
+          span.hud-label Sinh mệnh
+          span.hud-val.status#h-lives(style="color: #ff6060") ❤️❤️❤️❤️❤️
+        .hud-item
+          span.hud-label Bombs
+          span.hud-val.bombs#h-bombs 0
+        .hud-item
+          span.hud-label Monsters
+          span.hud-val.monsters#h-monsters 0
+
+      #canvas-wrap
+        canvas#gc(width="320", height="320")
+        #overlay
+          h2#ov-title DARK MAZE
+          p#ov-desc
+            | Màn hình tối đen. Chạm để hé lộ mê cung.
+            br
+            | Tránh 💣 và quái vật. Tìm EXIT để thoát!
+            br
+            | Di chuyển để hé lộ đường đi vừa qua.
+          button.ov-btn#ov-btn BẮT ĐẦU
+
+      #legend
+        .leg-item
+          .leg-dot(style="background: #40ff80")
+          |  ENTER
+        .leg-item
+          .leg-dot(style="background: #ff6040")
+          |  EXIT
+        .leg-item 💣 Bom
+        .leg-item 👾 Quái chậm
+        .leg-item 👹 Quái nhanh
+
+      #controls
+        .ctrl-btn.empty
+        .ctrl-btn#btn-up ▲
+        .ctrl-btn.empty
+        .ctrl-btn#btn-left ◀
+        .ctrl-btn#btn-down ▼
+        .ctrl-btn#btn-right ▶
+        .ctrl-btn.empty
+        .ctrl-btn.empty
+        .ctrl-btn.empty
+      #msg-bar
+
+    script(type="module", src="/darkMaze/main.js")
