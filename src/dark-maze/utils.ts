@@ -144,3 +144,63 @@ export function shakeScreen(dur: number = 400, intensity: number = 8) {
   (game.state as GameState).shakeTimer = performance.now() + dur;
   (game.state as GameState).shakeIntensity = intensity;
 }
+
+let audioCtx: AudioContext | null = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  return audioCtx;
+}
+
+export function playSound(type: "move" | "explosion" | "win" | "lose" | "damage") {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  const now = ctx.currentTime;
+
+  if (type === "move") {
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.1);
+    osc.start();
+    osc.stop(now + 0.1);
+  } else if (type === "explosion") {
+    osc.type = "square";
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.5);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.5);
+    osc.start();
+    osc.stop(now + 0.5);
+  } else if (type === "damage") {
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+    osc.start();
+    osc.stop(now + 0.3);
+  } else if (type === "win") {
+    osc.type = "sine";
+    [440, 554.37, 659.25, 880].forEach((f, i) => {
+      osc.frequency.setValueAtTime(f, now + i * 0.1);
+    });
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.5);
+    osc.start();
+    osc.stop(now + 0.5);
+  } else if (type === "lose") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.linearRampToValueAtTime(100, now + 0.5);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.5);
+    osc.start();
+    osc.stop(now + 0.5);
+  }
+}
+

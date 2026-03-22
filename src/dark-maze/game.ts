@@ -1,6 +1,6 @@
 import { state as game, GameState } from './state.js';
 import { CELL, LEVELS, SAFE_TOP, SAFE_BOTTOM } from './constants.js';
-import { mazeGen, isSolvable, spawnParticles, spawnConfetti, flashScreen, shakeScreen } from './utils.js';
+import { mazeGen, isSolvable, spawnParticles, spawnConfetti, flashScreen, shakeScreen, playSound } from './utils.js';
 import { showOverlay } from './renderer.js';
 
 export function initLevel(lvlIdx: number, bonusCarry: number) {
@@ -132,6 +132,7 @@ export function movePlayer(dir: number) {
   if (!state.alive || state.won) return;
   if (!canMove(state.player.r, state.player.c, dir)) {
     setMsg("Có tường!");
+    playSound("damage");
     state.emotion = "frustrated";
     state.lastAction = performance.now();
     setTimeout(() => {
@@ -147,6 +148,7 @@ export function movePlayer(dir: number) {
   else state.player.c++;
   
   state.lastDir = dir;
+  playSound("move");
   
   const k = `${state.player.r},${state.player.c}`;
   game.trail[k] = performance.now();
@@ -173,6 +175,7 @@ export function checkCollisions() {
       shakeScreen(600, 16);
       flashScreen("rgba(255, 60, 0, 0.45)", 400);
       state.emotion = "shocked";
+      playSound("explosion");
       takeDamage("Bùm! Bạn giẫm phải bôm!");
       return;
     }
@@ -192,6 +195,7 @@ export function takeDamage(msg: string) {
   state.lives--;
   updateHUD();
   if (state.lives <= 0) {
+    playSound("lose");
     die(msg);
   } else {
     setMsg(`${msg} Còn ${state.lives} ❤️`, "alert");
@@ -230,6 +234,7 @@ export function winLevel() {
   const state = game.state as GameState;
   state.won = true;
   state.emotion = "happy";
+  playSound("win");
   spawnParticles(game.W / 2, game.H / 2, 80, "confetti");
   setMsg("Bạn đã thoát khỏi mê cung!");
   const bonus = state.touches;
