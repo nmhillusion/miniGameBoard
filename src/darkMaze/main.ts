@@ -52,6 +52,9 @@ canvas.addEventListener("pointerdown", (e: PointerEvent) => {
 
 document.getElementById("ov-btn")?.addEventListener("click", () => {
   document.getElementById("overlay")!.style.display = "none";
+  document.getElementById("hud")?.classList.add("visible");
+  document.getElementById("legend")?.classList.add("visible");
+  document.getElementById("controls")?.classList.add("visible");
   const target = game.nextLevelTarget || { lvlIdx: 0, bonus: 0 };
   initLevel(target.lvlIdx, target.bonus);
   setMsg("Chạm vào màn hình để nhìn thấy mê cung!");

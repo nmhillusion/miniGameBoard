@@ -19,7 +19,7 @@
   left: 16px;
   right: 16px;
   z-index: 20;
-  display: flex;
+  display: none;
   justify-content: space-between;
   align-items: center;
   font-size: 13px;
@@ -28,6 +28,9 @@
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+#hud.visible {
+  display: flex;
 }
 .hud-item {
   display: flex;
@@ -80,10 +83,13 @@ canvas {
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
-  display: grid;
+  display: none;
   grid-template-columns: repeat(3, 36px);
   grid-template-rows: repeat(3, 36px);
   gap: 6px;
+}
+#controls.visible {
+  display: grid;
 }
 .ctrl-btn {
   background: rgba(20, 20, 32, 0.65);
@@ -168,13 +174,16 @@ canvas {
   left: 16px;
   right: 16px;
   z-index: 15;
-  display: flex;
+  display: none;
   gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
   font-size: 10px;
   color: #555;
   opacity: 0.5;
+}
+#legend.visible {
+  display: flex;
 }
 .leg-item {
   display: flex;
