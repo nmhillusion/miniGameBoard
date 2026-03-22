@@ -3,7 +3,7 @@ const GAME_INDEXES = [
     id: 1,
     name: "Dark Maze Game",
     description: "A dark maze game where you must find the exit while avoiding monsters and bombs.",
-    url: "darkMaze/index.html",
+    url: "dark-maze/index.html",
     icon: "🌑",
   },
 ];
