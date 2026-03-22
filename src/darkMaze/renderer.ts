@@ -101,11 +101,11 @@ export function drawBoyFace(cx: number, cy: number, scale: number, breathScale: 
     ctx.beginPath(); ctx.roundRect(-7, 5, 12, 7, 2); ctx.fill();
     // Shirt (with body bob)
     ctx.fillStyle = shirtColor;
-    ctx.beginPath(); ctx.roundRect(-6, -2 - bodyBob, 11, 8, 3); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(-6, 0 - bodyBob, 11, 7, 3); ctx.fill();
     
     // Sleeve back
     ctx.fillStyle = sleeveColor;
-    ctx.beginPath(); ctx.ellipse(-4, 0 - bodyBob, 3, 4, 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-4, 3 - bodyBob, 2.5, 3, 0.5, 0, Math.PI * 2); ctx.fill();
   }
 
   // Head
@@ -240,12 +240,12 @@ export function drawBoyFace(cx: number, cy: number, scale: number, breathScale: 
 
     // Front Arm & Hand (empty without weapon)
     ctx.fillStyle = skinColor;
-    ctx.beginPath(); ctx.ellipse(2, 6, 2, 5, -0.5, 0, Math.PI * 2); ctx.fill(); // arm
-    ctx.beginPath(); ctx.arc(5, 10, 2.5, 0, Math.PI * 2); ctx.fill(); // hand (fist)
+    ctx.beginPath(); ctx.ellipse(2, 8, 2, 4, -0.5, 0, Math.PI * 2); ctx.fill(); // arm
+    ctx.beginPath(); ctx.arc(4, 12, 2, 0, Math.PI * 2); ctx.fill(); // hand (fist)
 
     // Front Sleeve
     ctx.fillStyle = sleeveColor;
-    ctx.beginPath(); ctx.ellipse(-1, 1, 4, 5, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 4, 3, 3.5, -0.3, 0, Math.PI * 2); ctx.fill();
 
     if (state && state.isBlinking && !isDead && !["shocked", "frustrated"].includes(emotion)) {
       ctx.fillStyle = skinColor;
@@ -389,46 +389,50 @@ export function render(ts: number) {
 
   ctx.save(); ctx.fillStyle = "#0c0c14"; ctx.fillRect(0, 0, W, H); ctx.restore();
 
-  ctx.save();
-  const TRAIL_MAX_AGE = 10000;
-  for (const [key, visitTs] of Object.entries(game.trail)) {
-    const age = now - visitTs;
-    if (age > TRAIL_MAX_AGE) { delete game.trail[key]; continue; }
-    const fade = 1 - age / TRAIL_MAX_AGE;
-    const [tr, tc] = key.split(",").map(Number);
-    const tx = offsetLeft + tc * CELL, ty = offsetTop + tr * CELL;
-    ctx.globalAlpha = fade;
-    ctx.fillStyle = "#141420"; ctx.fillRect(tx + 1, ty + 1, CELL - 2, CELL - 2);
-    const { walls } = state;
-    ctx.strokeStyle = "#404070"; ctx.lineWidth = 2;
-    if (walls.h[tr][tc]) { ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + CELL, ty); ctx.stroke(); }
-    if (walls.h[tr + 1][tc]) { ctx.beginPath(); ctx.moveTo(tx, ty + CELL); ctx.lineTo(tx + CELL, ty + CELL); ctx.stroke(); }
-    if (walls.v[tr][tc]) { ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx, ty + CELL); ctx.stroke(); }
-    if (walls.v[tr][tc + 1]) { ctx.beginPath(); ctx.moveTo(tx + CELL, ty); ctx.lineTo(tx + CELL, ty + CELL); ctx.stroke(); }
-    ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    for (const b of state.bombs) if (b.r === tr && b.c === tc) ctx.fillText("💣", tx + CELL / 2, ty + CELL / 2);
-    for (const m of state.monsters) if (m.r === tr && m.c === tc) ctx.fillText(m.type === "fast" ? "👹" : "👾", tx + CELL / 2, ty + CELL / 2);
-  }
-  ctx.restore();
-
-  if (revealActive && revealProg > 0) {
-    ctx.save();
-    const r = REVEAL_R * (0.5 + revealProg * 0.6);
-    ctx.beginPath(); ctx.arc(revealX, revealY, r, 0, Math.PI * 2); ctx.clip();
+  if (state.won || state.isDead) {
     drawMazeBase();
-    ctx.restore();
-  }
-
-  {
+  } else {
     ctx.save();
-    const vr = CELL * 0.8;
-    const gOuter = ctx.createRadialGradient(px, py, 0, px, py, vr);
-    gOuter.addColorStop(0, "rgba(255,255,255,1)");
-    gOuter.addColorStop(0.8, "rgba(255,255,255,0.8)");
-    gOuter.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.beginPath(); ctx.arc(px, py, vr, 0, Math.PI * 2); ctx.clip();
-    drawMazeBase();
+    const TRAIL_MAX_AGE = 10000;
+    for (const [key, visitTs] of Object.entries(game.trail)) {
+      const age = now - visitTs;
+      if (age > TRAIL_MAX_AGE) { delete game.trail[key]; continue; }
+      const fade = 1 - age / TRAIL_MAX_AGE;
+      const [tr, tc] = key.split(",").map(Number);
+      const tx = offsetLeft + tc * CELL, ty = offsetTop + tr * CELL;
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = "#141420"; ctx.fillRect(tx + 1, ty + 1, CELL - 2, CELL - 2);
+      const { walls } = state;
+      ctx.strokeStyle = "#404070"; ctx.lineWidth = 2;
+      if (walls.h[tr][tc]) { ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + CELL, ty); ctx.stroke(); }
+      if (walls.h[tr + 1][tc]) { ctx.beginPath(); ctx.moveTo(tx, ty + CELL); ctx.lineTo(tx + CELL, ty + CELL); ctx.stroke(); }
+      if (walls.v[tr][tc]) { ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx, ty + CELL); ctx.stroke(); }
+      if (walls.v[tr][tc + 1]) { ctx.beginPath(); ctx.moveTo(tx + CELL, ty); ctx.lineTo(tx + CELL, ty + CELL); ctx.stroke(); }
+      ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (const b of state.bombs) if (b.r === tr && b.c === tc) ctx.fillText("💣", tx + CELL / 2, ty + CELL / 2);
+      for (const m of state.monsters) if (m.r === tr && m.c === tc) ctx.fillText(m.type === "fast" ? "👹" : "👾", tx + CELL / 2, ty + CELL / 2);
+    }
     ctx.restore();
+
+    if (revealActive && revealProg > 0) {
+      ctx.save();
+      const r = REVEAL_R * (0.5 + revealProg * 0.6);
+      ctx.beginPath(); ctx.arc(revealX, revealY, r, 0, Math.PI * 2); ctx.clip();
+      drawMazeBase();
+      ctx.restore();
+    }
+
+    {
+      ctx.save();
+      const vr = CELL * 0.8;
+      const gOuter = ctx.createRadialGradient(px, py, 0, px, py, vr);
+      gOuter.addColorStop(0, "rgba(255,255,255,1)");
+      gOuter.addColorStop(0.8, "rgba(255,255,255,0.8)");
+      gOuter.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.beginPath(); ctx.arc(px, py, vr, 0, Math.PI * 2); ctx.clip();
+      drawMazeBase();
+      ctx.restore();
+    }
   }
 
   drawEntryMarker(state.entry.r, state.entry.c);
