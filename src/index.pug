@@ -68,6 +68,18 @@ html(lang="en")
       .play-btn:hover {
         background: #7dd3fc;
       }
+      @media (max-width: 640px) {
+        body {
+          padding: 1rem;
+        }
+        h1 {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+        }
+        .game-list {
+          grid-template-columns: 1fr;
+        }
+      }
   body
     h1 Mini Game Board
     #game-board
