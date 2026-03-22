@@ -97,6 +97,7 @@ export function initLevel(lvlIdx: number, bonusCarry: number) {
     flashColor: "",
     flashTimer: 0,
     flashDur: 0,
+    roundStartTime: performance.now(),
   };
   updateHUD();
 }
@@ -109,6 +110,31 @@ export function updateHUD() {
   document.getElementById("h-lives")!.textContent = "❤️".repeat(state.lives);
   document.getElementById("h-bombs")!.textContent = String(state.bombs.length);
   document.getElementById("h-monsters")!.textContent = String(state.monsters.length);
+}
+
+export function updateTimerDisplay(currentTime: number) {
+  const state = game.state as GameState;
+  if (!state || !state.roundStartTime) return;
+  
+  const endTime = state.roundEndTime || currentTime;
+  const elapsed = endTime - state.roundStartTime;
+  const seconds = Math.floor(elapsed / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const displaySeconds = seconds % 60;
+  const displayMinutes = minutes % 60;
+  
+  const timerEl = document.getElementById("h-time");
+  if (!timerEl) return;
+  
+  timerEl.textContent = `${String(displayMinutes).padStart(2, '0')}:${String(displaySeconds).padStart(2, '0')}`;
+  
+  // Update color based on elapsed time
+  timerEl.classList.remove('orange', 'red');
+  if (elapsed > 5 * 60 * 1000) {
+    timerEl.classList.add('red');
+  } else if (elapsed > 3 * 60 * 1000) {
+    timerEl.classList.add('orange');
+  }
 }
 
 export function setMsg(txt: string, cls: string = "") {
@@ -219,6 +245,7 @@ export function die(msg: string) {
   game.nextLevelTarget = { lvlIdx: 0, bonus: 0 };
   setMsg(msg, "alert");
   updateHUD();
+  state.roundEndTime = performance.now();
   stopMusic();
   setTimeout(
     () =>
@@ -240,6 +267,7 @@ export function winLevel() {
   setMsg("Bạn đã thoát khỏi mê cung!");
   const bonus = state.touches;
   updateHUD();
+  state.roundEndTime = performance.now();
   stopMusic();
   const exitX = (state.exit.c + 0.5) * CELL;
   const exitY = (state.exit.r + 0.5) * CELL;

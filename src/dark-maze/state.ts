@@ -41,6 +41,8 @@ export interface GameState {
   flashDur: number;
   flashColor: string;
   touches: number;
+  roundStartTime: number;
+  roundEndTime?: number;
 }
 
 export interface GameStore {

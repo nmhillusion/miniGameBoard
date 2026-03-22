@@ -99,6 +99,15 @@
 .hud-val.monsters {
   color: #ff80ff;
 }
+.hud-val.time {
+  color: #e8e8d0;
+}
+.hud-val.time.orange {
+  color: #ffaa00;
+}
+.hud-val.time.red {
+  color: #ff4444;
+}
 #canvas-wrap {
   position: relative;
   width: 100%;

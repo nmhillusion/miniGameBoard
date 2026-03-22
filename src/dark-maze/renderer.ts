@@ -1,6 +1,6 @@
 import { state as game, GameState } from './state.js';
 import { CELL, REVEAL_DUR, REVEAL_R } from './constants.js';
-import { tickMonsters } from './game.js';
+import { tickMonsters, updateTimerDisplay } from './game.js';
 
 let ctx: CanvasRenderingContext2D | null = null;
 
@@ -341,6 +341,7 @@ export function render(ts: number) {
   tickMonsters(ts);
 
   const now = ts || performance.now();
+  updateTimerDisplay(now);
   let sx = 0, sy = 0;
   if (now < state.shakeTimer) {
     const progress = (state.shakeTimer - now) / 500;
