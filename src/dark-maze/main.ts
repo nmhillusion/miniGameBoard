@@ -2,6 +2,7 @@ import { state as game, GameState } from './state.js';
 import { initLevel, movePlayer, updateHUD, setMsg } from './game.js';
 import { setContext, render } from './renderer.js';
 import { CELL } from './constants.js';
+import { startMusic, toggleMute } from './utils.js';
 
 const canvas = document.getElementById("gc") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -27,6 +28,7 @@ resizeCanvas();
 // initLevel will be called when user clicks start
 
 canvas.addEventListener("pointerdown", (e: PointerEvent) => {
+  startMusic();
   const state = game.state as GameState;
   if (!state || !state.alive || state.won) return;
   if (state.touches <= 0) {
@@ -51,6 +53,7 @@ canvas.addEventListener("pointerdown", (e: PointerEvent) => {
 });
 
 document.getElementById("ov-btn")?.addEventListener("click", () => {
+  startMusic();
   document.getElementById("overlay")!.style.display = "none";
   document.getElementById("hud")?.classList.add("visible");
   document.getElementById("legend")?.classList.add("visible");
@@ -60,6 +63,16 @@ document.getElementById("ov-btn")?.addEventListener("click", () => {
   setMsg("Chạm vào màn hình để nhìn thấy mê cung!");
   if (game.animFrame !== null) cancelAnimationFrame(game.animFrame);
   game.animFrame = requestAnimationFrame(render);
+});
+
+document.getElementById("btn-home")?.addEventListener("click", () => {
+  window.location.href = "/index.html";
+});
+
+document.getElementById("btn-mute")?.addEventListener("click", () => {
+  const muted = toggleMute();
+  const btn = document.getElementById("btn-mute");
+  if (btn) btn.textContent = muted ? "🔇" : "🔊";
 });
 
 document.getElementById("btn-up")?.addEventListener("click", () => movePlayer(0));

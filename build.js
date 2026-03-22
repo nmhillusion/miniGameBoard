@@ -8,7 +8,12 @@ engine.config({
     markdown: { enabled: false },
     scss: { enabled: true },
     typescript: { enabled: true },
-    copyResource: { enabled: true },
+    copyResource: {
+        enabled: true,
+        config: {
+            extsToCopy: [".jpg", ".jpeg", ".png", ".gif", ".ico", ".svg", ".woff", ".woff2", ".ttf", ".eot", ".mp3"]
+        }
+    },
     rewriteJavascript: { enabled: true, config: { rewriteImport: true } }
 });
 

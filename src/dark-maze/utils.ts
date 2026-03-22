@@ -204,3 +204,32 @@ export function playSound(type: "move" | "explosion" | "win" | "lose" | "damage"
   }
 }
 
+let musicStarted = false;
+let bgm: HTMLAudioElement | null = null;
+let isMuted = false;
+
+export function toggleMute() {
+  isMuted = !isMuted;
+  if (bgm) {
+    bgm.muted = isMuted;
+  }
+  return isMuted;
+}
+
+export function startMusic() {
+  if (musicStarted) return;
+  const ctx = getAudioCtx();
+  if (ctx.state === "suspended") ctx.resume();
+
+  bgm = new Audio('/dark-maze/assets/bgm.mp3');
+  bgm.loop = true;
+  bgm.volume = 0.4;
+  bgm.muted = isMuted;
+  bgm.play().catch(e => console.error("Audio play failed:", e));
+  
+  musicStarted = true;
+}
+
+
+
+

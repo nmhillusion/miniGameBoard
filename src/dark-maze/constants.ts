@@ -1,5 +1,5 @@
 export const CELL = 32;
-export const SAFE_TOP = 100;
+export const SAFE_TOP = 140;
 export const SAFE_BOTTOM = 200;
 
 export const LEVELS = [

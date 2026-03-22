@@ -13,9 +13,40 @@
   overflow: hidden;
   user-select: none;
 }
+#top-bar {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+}
+#btn-home,
+#btn-mute {
+  background: rgba(20, 20, 32, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+#btn-home:active,
+#btn-mute:active {
+  transform: scale(0.9);
+  background: rgba(128, 200, 255, 0.3);
+}
+
 #hud {
   position: absolute;
-  top: 10px;
+  top: 48px;
   left: 10px;
   right: 10px;
   z-index: 20;
@@ -175,7 +206,7 @@ canvas {
 }
 #legend {
   position: absolute;
-  top: 60px;
+  top: 100px;
   left: 16px;
   right: 16px;
   z-index: 15;
@@ -192,7 +223,7 @@ canvas {
 }
 @media (max-width: 400px) {
   #legend {
-    top: 60px;
+    top: 104px;
     font-size: 9px;
   }
   #controls {
