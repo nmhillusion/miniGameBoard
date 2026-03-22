@@ -2,7 +2,8 @@ const GAME_INDEXES = [
   {
     id: 1,
     name: "Dark Maze Game",
-    description: "A dark maze game where you must find the exit while avoiding monsters and bombs.",
+    description:
+      "Trò chơi mê cung bóng tối, nơi bạn phải tìm lối thoát trong khi tránh quái vật và bom.",
     url: "dark-maze/index.html",
     icon: "🌑",
   },
