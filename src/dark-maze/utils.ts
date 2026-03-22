@@ -230,6 +230,13 @@ export function startMusic() {
   musicStarted = true;
 }
 
+export function stopMusic() {
+  if (!musicStarted || !bgm) return;
+  bgm.pause();
+  bgm.currentTime = 0;
+  musicStarted = false;
+}
+
 
 
 

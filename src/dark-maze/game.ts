@@ -1,6 +1,6 @@
 import { state as game, GameState } from './state.js';
 import { CELL, LEVELS, SAFE_TOP, SAFE_BOTTOM } from './constants.js';
-import { mazeGen, isSolvable, spawnParticles, spawnConfetti, flashScreen, shakeScreen, playSound } from './utils.js';
+import { mazeGen, isSolvable, spawnParticles, spawnConfetti, flashScreen, shakeScreen, playSound, stopMusic } from './utils.js';
 import { showOverlay } from './renderer.js';
 
 export function initLevel(lvlIdx: number, bonusCarry: number) {
@@ -219,6 +219,7 @@ export function die(msg: string) {
   game.nextLevelTarget = { lvlIdx: 0, bonus: 0 };
   setMsg(msg, "alert");
   updateHUD();
+  stopMusic();
   setTimeout(
     () =>
       showOverlay(
@@ -239,6 +240,7 @@ export function winLevel() {
   setMsg("Bạn đã thoát khỏi mê cung!");
   const bonus = state.touches;
   updateHUD();
+  stopMusic();
   const exitX = (state.exit.c + 0.5) * CELL;
   const exitY = (state.exit.r + 0.5) * CELL;
   spawnConfetti(exitX, exitY);
