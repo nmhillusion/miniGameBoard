@@ -52,6 +52,10 @@ The game is designed for "Vertical" play:
 - **Dynamic HUD**: The HUD uses `flex-wrap` and `gap` to stay legible on narrow screens.
 - **Large Touch Targets**: The D-pad buttons are sized for thumbs (50px) with `-webkit-tap-highlight-color` removed for a native feel.
 
+## 🎵 Music License
+
+The background music, "Dark Ambience Loop," is by Iwan Gabovitch. It is licensed under **CC-BY 3.0**. Attribution is required: "Dark Ambience Loop by Iwan Gabovitch".
+
 ---
 
 ## 🧪 How to Modify
