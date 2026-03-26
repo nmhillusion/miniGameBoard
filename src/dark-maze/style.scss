@@ -121,43 +121,6 @@ canvas {
   cursor: pointer;
   touch-action: none;
 }
-#controls {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  display: none;
-  grid-template-columns: repeat(3, 50px);
-  grid-template-rows: repeat(3, 50px);
-  gap: 10px;
-}
-#controls.visible {
-  display: grid;
-}
-.ctrl-btn {
-  background: rgba(40, 40, 60, 0.75);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #e8e8d0;
-  font-size: 24px;
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.1s;
-  -webkit-tap-highlight-color: transparent;
-}
-.ctrl-btn:active {
-  background: rgba(128, 200, 255, 0.3);
-  transform: scale(0.92);
-}
-.ctrl-btn.empty {
-  background: transparent;
-  border-color: transparent;
-  pointer-events: none;
-}
 #msg-bar {
   position: absolute;
   bottom: 8px;
@@ -234,11 +197,6 @@ canvas {
   #legend {
     top: 104px;
     font-size: 9px;
-  }
-  #controls {
-    grid-template-columns: repeat(3, 44px);
-    grid-template-rows: repeat(3, 44px);
-    gap: 8px;
   }
 }
 #legend.visible {

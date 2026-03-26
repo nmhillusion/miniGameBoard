@@ -23,15 +23,17 @@ The game uses a centralized `GameStore` to manage both the current level's `Game
     1. **Clear/Background**: Solid dark color.
     2. **Fog of War Clipping**:
         - **Trail Layer**: Draws recently visited cells with a `globalAlpha` fade.
-        - **Reveal Pulse**: A `clip()` circle generated when the player "touches" the screen.
+        - **Reveal Pulse**: A `clip()` circle generated when the player "double-taps" or "double-clicks" the screen.
         - **Player Glow**: A radial gradient light that follows the player.
     3. **Base Maze**: The `drawMazeBase()` function renders the actual walls, bombs, and monsters. This is usually clipped by the Fog of War but is called directly when `state.won` or `state.isDead` is true.
     4. **Procedural Character**: `drawBoyFace()` draws the player without external assets, using canvas primitives to animate eyes, mouth, and walking bob based on state.
 
-### 3. Level Logic (`game.ts`)
-- **Generation**: Uses `mazeGen` (recursive backtracker) and then "braids" the maze by randomly removing walls to ensure it's not a perfect tree (allowing loops/multiple paths).
-- **Collision**: Checks every frame if the player's grid position matches a bomb or monster.
-- **Input**: Supports Keyboard (WASD/Arrows), On-screen D-pad (for mobile), and Pointer (for "Reveal" pulses).
+### 3. Input & Interaction (`input.ts`)
+The game is optimized for mobile-first, vertical play:
+- **Swipe to Move**: Uses `touchstart` and `touchend` to detect swipe direction (Up, Down, Left, Right).
+- **Double-Tap to Reveal**: A rapid double-tap (within 300ms) consumes a "Touch" to create a temporary reveal pulse around the touch point.
+- **Keyboard Support**: Full WASD and Arrow key support for desktop play.
+- **Auto-Music**: Any first interaction (swipe, tap, key) triggers `startMusic()` to comply with browser autoplay policies.
 
 ---
 
@@ -39,18 +41,17 @@ The game uses a centralized `GameStore` to manage both the current level's `Game
 
 You can easily tune the game difficulty here:
 - `CELL`: Size of each grid square (default 32px).
-- `SAFE_TOP / SAFE_BOTTOM`: Padding for HUD and Controls.
-- `LEVELS`: An array of objects defining `touches`, `bombCount`, and `monsterTypes`.
 - `REVEAL_DUR`: How long a "touch" reveal lasts (ms).
 - `REVEAL_R`: The radius of the "touch" reveal.
+- `LEVELS`: An array defining `touches`, `bombCount`, and `monsterTypes`.
 
 ---
 
 ## 📱 Mobile Responsiveness
-The game is designed for "Vertical" play:
-- **Canvas Scaling**: The canvas automatically resizes to `window.innerWidth/Height` in `main.ts`.
-- **Dynamic HUD**: The HUD uses `flex-wrap` and `gap` to stay legible on narrow screens.
-- **Large Touch Targets**: The D-pad buttons are sized for thumbs (50px) with `-webkit-tap-highlight-color` removed for a native feel.
+- **Gestures**: Intuitive swipe-to-move removes the need for an on-screen D-pad, maximizing the visible game area.
+- **Canvas Scaling**: The canvas automatically resizes to `window.innerWidth/Height`.
+- **Touch Targets**: Double-tap threshold is tuned for mobile responsiveness (300ms).
+- **HUD**: Uses `backdrop-filter: blur` and semi-transparent backgrounds for a modern mobile look.
 
 ## 🎵 Music License
 

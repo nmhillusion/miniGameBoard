@@ -97,6 +97,7 @@ export function initLevel(lvlIdx: number, bonusCarry: number) {
     flashColor: "",
     flashTimer: 0,
     flashDur: 0,
+    lastClickTime: 0,
     roundStartTime: performance.now(),
   };
   updateHUD();
