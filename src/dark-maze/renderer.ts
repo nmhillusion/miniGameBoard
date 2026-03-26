@@ -333,6 +333,28 @@ export function drawMazeBase() {
   for (const m of monsters) ctx.fillText(m.type === "fast" ? "👹" : "👾", offsetLeft + (m.c + 0.5) * CELL, offsetTop + (m.r + 0.5) * CELL);
 }
 
+export function drawProximityWarnings(ts: number) {
+  if (!ctx) return;
+  const state = game.state as GameState;
+  const { player, monsters, offsetLeft, offsetTop } = state;
+
+  for (const m of monsters) {
+    if (Math.hypot(m.r - player.r, m.c - player.c) <= 2) {
+      const mx = offsetLeft + (m.c + 0.5) * CELL;
+      const my = offsetTop + (m.r + 0.5) * CELL;
+      const pulse = (Math.sin(ts * 0.005) + 1) * 0.5; // 0 to 1
+      
+      ctx.save();
+      ctx.globalAlpha = 0.3 * pulse;
+      ctx.fillStyle = "rgba(255, 60, 0, 0.5)";
+      ctx.beginPath();
+      ctx.arc(mx, my, CELL * (1 + 0.2 * pulse), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
 export function render(ts: number) {
   if (!ctx) return;
   const { W, H } = game;
@@ -414,6 +436,8 @@ export function render(ts: number) {
       for (const m of state.monsters) if (m.r === tr && m.c === tc) ctx.fillText(m.type === "fast" ? "👹" : "👾", tx + CELL / 2, ty + CELL / 2);
     }
     ctx.restore();
+
+    drawProximityWarnings(now);
 
     if (revealActive && revealProg > 0) {
       ctx.save();
