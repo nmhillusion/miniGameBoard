@@ -28,9 +28,13 @@ document.getElementById("ov-btn")?.addEventListener("click", () => {
   document.getElementById("overlay")!.style.display = "none";
   document.getElementById("hud")?.classList.add("visible");
   document.getElementById("legend")?.classList.add("visible");
+  
+  // Explicitly reset the game state before initializing level
   const target = game.nextLevelTarget || { lvlIdx: 0, bonus: 0 };
   initLevel(target.lvlIdx, target.bonus);
+  
   setMsg("Vuốt để di chuyển. Chạm nhanh 2 lần để nhìn thấy mê cung!");
+  
   if (game.animFrame !== null) cancelAnimationFrame(game.animFrame);
   game.animFrame = requestAnimationFrame(render);
 });

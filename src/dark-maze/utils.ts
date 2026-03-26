@@ -217,13 +217,15 @@ export function toggleMute() {
 }
 
 export function startMusic() {
-  if (musicStarted) return;
+  if (musicStarted && bgm && !bgm.paused) return;
   const ctx = getAudioCtx();
   if (ctx.state === "suspended") ctx.resume();
 
-  bgm = new Audio('/dark-maze/assets/bgm.mp3');
-  bgm.loop = true;
-  bgm.volume = 0.4;
+  if (!bgm) {
+    bgm = new Audio('/dark-maze/assets/bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.4;
+  }
   bgm.muted = isMuted;
   bgm.play().catch(e => console.error("Audio play failed:", e));
   
@@ -232,6 +234,7 @@ export function startMusic() {
 
 export function stopMusic() {
   if (!musicStarted || !bgm) return;
+  console.log("Stopping music...");
   bgm.pause();
   bgm.currentTime = 0;
   musicStarted = false;

@@ -21,9 +21,7 @@ export function initInputs(canvas: HTMLCanvasElement) {
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
-    // Minimum swipe distance of 20px
     if (Math.max(absDx, absDy) > 20) {
-      startMusic();
       if (absDx > absDy) {
         if (dx > 0) movePlayer(3); // Right
         else movePlayer(2); // Left
@@ -36,15 +34,13 @@ export function initInputs(canvas: HTMLCanvasElement) {
 
   // 2. Double-click to Reveal
   canvas.addEventListener("pointerdown", (e: PointerEvent) => {
-    startMusic();
     const state = game.state as GameState;
-    if (!state || !state.alive || state.won) return;
+    if (!state || !state.alive || state.won || state.isDead) return;
 
     const now = performance.now();
     const timeSinceLastClick = now - (state.lastClickTime || 0);
     state.lastClickTime = now;
 
-    // Only proceed if it's a double click (within 300ms)
     if (timeSinceLastClick > 300) {
       state.lastAction = now;
       return;
@@ -73,7 +69,9 @@ export function initInputs(canvas: HTMLCanvasElement) {
 
   // 3. Keyboard Controls
   document.addEventListener("keydown", (e: KeyboardEvent) => {
-    startMusic();
+    const state = game.state as GameState;
+    if (!state || !state.alive || state.won || state.isDead) return;
+
     if (e.key === "ArrowUp" || e.key === "w") movePlayer(0);
     else if (e.key === "ArrowDown" || e.key === "s") movePlayer(1);
     else if (e.key === "ArrowLeft" || e.key === "a") movePlayer(2);
