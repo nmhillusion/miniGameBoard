@@ -48,7 +48,15 @@ export function initLevel(lvlIdx: number, bonusCarry: number) {
     attempts++;
   } while (!isSolvable(rows, cols, walls, bombs) && attempts < 50);
 
-  const monsters: { r: number, c: number, type: string, lastMove: number }[] = [];
+  const monsters: { 
+    r: number, 
+    c: number, 
+    type: string, 
+    lastMove: number, 
+    lastRevealR: number, 
+    lastRevealC: number, 
+    lastRevealTime: number 
+  }[] = [];
   for (const type of cfg.monsterTypes || []) {
     let r = 0, c = 0, k = "";
     do {
@@ -57,7 +65,7 @@ export function initLevel(lvlIdx: number, bonusCarry: number) {
       k = `${r},${c}`;
     } while (used.has(k));
     used.add(k);
-    monsters.push({ r, c, type, lastMove: 0 });
+    monsters.push({ r, c, type, lastMove: 0, lastRevealR: r, lastRevealC: c, lastRevealTime: 0 });
   }
   game.trail = {};
   game.trail["0,0"] = performance.now();

@@ -338,18 +338,28 @@ export function drawProximityWarnings(ts: number) {
   const state = game.state as GameState;
   const { player, monsters, offsetLeft, offsetTop } = state;
 
+  const REVEAL_DEBOUNCE = 5000; // 5 seconds
+
   for (const m of monsters) {
     if (Math.hypot(m.r - player.r, m.c - player.c) <= 2) {
-      const mx = offsetLeft + (m.c + 0.5) * CELL;
-      const my = offsetTop + (m.r + 0.5) * CELL;
+      // Debounce the revealed position
+      if (ts - (m.lastRevealTime || 0) > REVEAL_DEBOUNCE) {
+        m.lastRevealR = m.r;
+        m.lastRevealC = m.c;
+        m.lastRevealTime = ts;
+      }
+
+      const mx = offsetLeft + ((m.lastRevealC ?? m.c) + 0.5) * CELL;
+      const my = offsetTop + ((m.lastRevealR ?? m.r) + 0.5) * CELL;
       const pulse = (Math.sin(ts * 0.005) + 1) * 0.5; // 0 to 1
       
       ctx.save();
-      ctx.globalAlpha = 0.3 * pulse;
-      ctx.fillStyle = "rgba(255, 60, 0, 0.5)";
+      ctx.globalAlpha = 0.6 * (1 - pulse);
+      ctx.strokeStyle = "rgba(255, 60, 0, 0.8)";
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(mx, my, CELL * (1 + 0.2 * pulse), 0, Math.PI * 2);
-      ctx.fill();
+      ctx.stroke();
       ctx.restore();
     }
   }

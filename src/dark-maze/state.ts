@@ -13,7 +13,16 @@ export interface GameState {
   shakeY: number;
   walls: { h: boolean[][], v: boolean[][] };
   bombs: { r: number, c: number }[];
-  monsters: { r: number, c: number, type: string, lastMove?: number, moveDelay?: number }[];
+  monsters: { 
+    r: number, 
+    c: number, 
+    type: string, 
+    lastMove?: number, 
+    moveDelay?: number,
+    lastRevealR?: number,
+    lastRevealC?: number,
+    lastRevealTime?: number
+  }[];
   rows: number;
   cols: number;
   offsetLeft: number;
