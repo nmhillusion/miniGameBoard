@@ -7,6 +7,14 @@ const GAME_INDEXES = [
     url: "dark-maze/index.html",
     icon: "🌑",
   },
+  {
+    id: 2,
+    name: "Tank Shot",
+    description:
+      "Điều khiển xe tăng tiêu diệt kẻ địch. Chạm để xoay và bắn!",
+    url: "tank-shot/index.html",
+    icon: "🚀",
+  },
 ];
 
 document.addEventListener("DOMContentLoaded", () => {

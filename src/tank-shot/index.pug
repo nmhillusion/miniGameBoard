@@ -1,0 +1,44 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Tank Shot
+    link(rel="icon", href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>")
+    link(rel="stylesheet", href="/tank-shot/style.css")
+  body
+    #game-root
+      #top-bar
+        button#btn-home(title="Home") 🏠
+        button#btn-mute(title="Mute/Unmute") 🔊
+      #hud
+        .hud-item
+          span.hud-label Level
+          span.hud-val#h-level 1
+        .hud-item
+          span.hud-label Bots
+          span.hud-val#h-bots 0
+        .hud-item
+          span.hud-label Lives
+          span.hud-val#h-lives ❤️❤️❤️
+        .hud-item
+          span.hud-label Score
+          span.hud-val#h-score 0
+
+      #canvas-wrap
+        canvas#gc
+        #overlay
+          h2#ov-title 🚀 TANK SHOT
+          p#ov-desc
+            | Command your tank to destroy all enemy bots.
+            br
+            | Press direction keys to rotate, press again to move.
+            br
+            | [Space] to shoot ahead.
+            br
+            | Watch out for 🧱 (destructible) and 🟩 (permanent) walls!
+          button.ov-btn#ov-btn START MISSION
+
+      #msg-bar
+
+    script(type="module", src="/tank-shot/main.js")
