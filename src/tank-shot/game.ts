@@ -1,5 +1,6 @@
 import { state as gameContainer, GameState, Tank, Bullet, Particle } from './state.js';
 import { GRID_SIZE, Direction, DIR_VECTORS, WallType, CELL, SHAKE_DUR, EXPLOSION_PARTICLES, TANK_COLORS } from './constants.js';
+import { showOverlay } from './renderer.js';
 
 export function setMsg(text: string) {
     const bar = document.getElementById("msg-bar");
@@ -184,6 +185,7 @@ function updateBullets(ts: number) {
             spawnExplosion(s.player.r, s.player.c, TANK_COLORS.PLAYER);
             if (s.lives <= 0) {
                 s.isDead = true;
+                showOverlay("MISSION FAILED", `You destroyed ${s.score / 100} bots, but your tank was lost. Restart the campaign?`, "RETRY");
             } else {
                 setTimeout(() => {
                     s.player.alive = true;
@@ -210,10 +212,7 @@ function updateBullets(ts: number) {
 
     if (s.bots.every(b => !b.alive) && !s.won) {
         s.won = true;
-        setTimeout(() => {
-            initLevel(s.level + 1);
-            setMsg(`Chasing next mission: Level ${s.level}`);
-        }, 2000);
+        showOverlay("MISSION ACCOMPLISHED", `All hostiles neutralized in Level ${s.level}. Proceed to the next zone?`, "NEXT LEVEL");
     }
 }
 

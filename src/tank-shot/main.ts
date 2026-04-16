@@ -30,11 +30,26 @@ document.getElementById("btn-home")?.addEventListener("click", () => {
 });
 
 document.getElementById("ov-btn")?.addEventListener("click", () => {
-    const s = gameContainer.state = initState(window.innerWidth, window.innerHeight - 80);
-    resizeCanvas();
-    initInputs();
-    initLevel(1);
+    let s = gameContainer.state;
     
+    if (!s) {
+        // Initial start
+        s = gameContainer.state = initState(window.innerWidth, window.innerHeight - 80);
+        initInputs();
+        initLevel(1);
+    } else if (s.won) {
+        // Next Level
+        initLevel(s.level + 1);
+    } else if (s.isDead) {
+        // Restart Campaign
+        const score = s.score; // Optional: persist score or reset
+        const level = 1;
+        s = gameContainer.state = initState(window.innerWidth, window.innerHeight - 80);
+        s.score = 0; 
+        initLevel(level);
+    }
+
+    resizeCanvas();
     document.getElementById("overlay")!.style.display = "none";
     
     if (s.animFrame !== null) cancelAnimationFrame(s.animFrame);
