@@ -20,7 +20,7 @@ export function updateHUD() {
     const hScore = document.getElementById("h-score");
 
     if (hLvl) hLvl.textContent = String(s.level);
-    if (hBots) hBots.textContent = String(s.bots.filter(b => b.alive).length);
+    if (hBots) hBots.textContent = `${s.botsDestroyedCount}/${s.totalBotsToSpawn}`;
     if (hLives) hLives.textContent = "❤️".repeat(Math.max(0, s.lives));
     if (hScore) hScore.textContent = String(s.score);
 }
@@ -80,22 +80,66 @@ export function initLevel(lvl: number) {
     s.grid[s.player.r][s.player.c] = WallType.NONE;
 
     // Spawn Bots
-    const botCount = 2 + Math.floor(lvl / 2);
+    s.totalBotsToSpawn = 5 + Math.floor(lvl * 1.5);
+    s.botsSpawnedCount = 0;
+    s.botsDestroyedCount = 0;
     s.bots = [];
-    let spawned = 0;
-    while(spawned < botCount) {
-        const r = Math.floor(Math.random() * (GRID_SIZE / 2));
-        const c = Math.floor(Math.random() * GRID_SIZE);
-        if (s.grid[r][c] === WallType.NONE && (r !== s.player.r || c !== s.player.c)) {
-            s.bots.push({
-                r, c, dir: Direction.DOWN, visualR: r, visualC: c,
-                lastAction: 0, alive: true, type: 'bot'
-            });
-            spawned++;
-        }
+
+    const maxActive = Math.min(3 + Math.floor(lvl / 4), 6);
+    for (let i = 0; i < maxActive; i++) {
+        spawnBot();
     }
 
     updateHUD();
+}
+
+export function spawnBot() {
+    const s = gameContainer.state;
+    if (!s || s.botsSpawnedCount >= s.totalBotsToSpawn) return;
+
+    let attempts = 0;
+    while(attempts < 100) {
+        let r = 0, c = 0;
+        const edge = Math.floor(Math.random() * 4); // 0: Top, 1: Right, 2: Bottom, 3: Left
+        
+        if (edge === 0) { // Top
+            r = 0;
+            c = Math.floor(Math.random() * GRID_SIZE);
+        } else if (edge === 1) { // Right
+            r = Math.floor(Math.random() * GRID_SIZE);
+            c = GRID_SIZE - 1;
+        } else if (edge === 2) { // Bottom
+            r = GRID_SIZE - 1;
+            c = Math.floor(Math.random() * GRID_SIZE);
+        } else { // Left
+            r = Math.floor(Math.random() * GRID_SIZE);
+            c = 0;
+        }
+        
+        // Ensure spawn point is clear and not too close to player
+        const distToPlayer = Math.hypot(r - s.player.r, c - s.player.c);
+        if (s.grid[r][c] === WallType.NONE && distToPlayer > 3) {
+            const otherBot = s.bots.find(b => b.alive && b.r === r && b.c === c);
+            if (!otherBot) {
+                // Initial direction facing into the board
+                const dir = edge === 0 ? Direction.DOWN :
+                            edge === 1 ? Direction.LEFT :
+                            edge === 2 ? Direction.UP : Direction.RIGHT;
+
+                // Visual entry effect from outside
+                const visualR = edge === 0 ? -1 : edge === 2 ? GRID_SIZE : r;
+                const visualC = edge === 3 ? -1 : edge === 1 ? GRID_SIZE : c;
+
+                s.bots.push({
+                    r, c, dir, visualR, visualC,
+                    lastAction: 0, alive: true, type: 'bot'
+                });
+                s.botsSpawnedCount++;
+                return;
+            }
+        }
+        attempts++;
+    }
 }
 
 export function tryMove(tank: Tank, dir: Direction) {
@@ -200,7 +244,11 @@ function updateBullets(ts: number) {
                     bot.alive = false;
                     b.active = false;
                     s.score += 100;
+                    s.botsDestroyedCount++;
                     spawnExplosion(bot.r, bot.c, TANK_COLORS.BOT);
+                    
+                    spawnBot();
+                    
                     updateHUD();
                     break;
                 }
@@ -209,10 +257,11 @@ function updateBullets(ts: number) {
     }
 
     s.bullets = s.bullets.filter(b => b.active);
+    s.bots = s.bots.filter(b => b.alive);
 
-    if (s.bots.every(b => !b.alive) && !s.won) {
+    if (s.botsDestroyedCount >= s.totalBotsToSpawn && !s.won) {
         s.won = true;
-        showOverlay("MISSION ACCOMPLISHED", `All hostiles neutralized in Level ${s.level}. Proceed to the next zone?`, "NEXT LEVEL");
+        showOverlay("MISSION ACCOMPLISHED", `Level ${s.level} complete. Total bots destroyed: ${s.botsDestroyedCount}. Proceed to the next zone?`, "NEXT LEVEL");
     }
 }
 

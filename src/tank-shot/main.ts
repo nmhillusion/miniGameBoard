@@ -29,13 +29,13 @@ document.getElementById("btn-home")?.addEventListener("click", () => {
     window.location.href = "/index.html";
 });
 
-document.getElementById("ov-btn")?.addEventListener("click", () => {
+export function handleOverlayAction() {
     let s = gameContainer.state;
     
     if (!s) {
         // Initial start
         s = gameContainer.state = initState(window.innerWidth, window.innerHeight - 80);
-        initInputs();
+        initInputs(handleOverlayAction);
         initLevel(1);
     } else if (s.won) {
         // Next Level
@@ -50,8 +50,11 @@ document.getElementById("ov-btn")?.addEventListener("click", () => {
     }
 
     resizeCanvas();
-    document.getElementById("overlay")!.style.display = "none";
+    const ov = document.getElementById("overlay");
+    if (ov) ov.style.display = "none";
     
     if (s.animFrame !== null) cancelAnimationFrame(s.animFrame);
     s.animFrame = requestAnimationFrame(render);
-});
+}
+
+document.getElementById("ov-btn")?.addEventListener("click", handleOverlayAction);

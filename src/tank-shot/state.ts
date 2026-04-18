@@ -48,6 +48,9 @@ export interface GameState {
     offsetTop: number;
     won: boolean;
     isDead: boolean;
+    totalBotsToSpawn: number;
+    botsSpawnedCount: number;
+    botsDestroyedCount: number;
     shakeTimer: number;
     shakeIntensity: number;
     animFrame: number | null;
@@ -76,6 +79,9 @@ export function initState(W: number, H: number): GameState {
         offsetTop: 0,
         won: false,
         isDead: false,
+        totalBotsToSpawn: 0,
+        botsSpawnedCount: 0,
+        botsDestroyedCount: 0,
         shakeTimer: 0,
         shakeIntensity: 0,
         animFrame: null

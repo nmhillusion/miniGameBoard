@@ -2,9 +2,17 @@ import { state as gameContainer } from './state.js';
 import { Direction } from './constants.js';
 import { tryMove, shoot } from './game.js';
 
-export function initInputs() {
+export function initInputs(onOverlayAction: () => void) {
     window.addEventListener("keydown", (e) => {
         const s = gameContainer.state;
+
+        if (e.key === "Enter") {
+            if (!s || s.won || s.isDead) {
+                onOverlayAction();
+                return;
+            }
+        }
+
         if (!s || s.isDead || s.won || !s.player.alive) return;
 
         switch (e.key) {
@@ -33,7 +41,4 @@ export function initInputs() {
                 break;
         }
     });
-
-    // Simple touch handlers could go here similar to dark-maze, 
-    // but we'll stick to keyboard for the initial implementation.
 }
