@@ -35,7 +35,6 @@ export function handleOverlayAction() {
     if (!s) {
         // Initial start
         s = gameContainer.state = initState(window.innerWidth, window.innerHeight - 80);
-        initInputs(handleOverlayAction);
         initLevel(1);
     } else if (s.won) {
         // Next Level
@@ -58,3 +57,6 @@ export function handleOverlayAction() {
 }
 
 document.getElementById("ov-btn")?.addEventListener("click", handleOverlayAction);
+
+// Initialize inputs at startup to allow Enter key to start the game
+initInputs(handleOverlayAction);

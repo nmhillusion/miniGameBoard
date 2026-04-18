@@ -121,18 +121,29 @@ export function spawnBot() {
         if (s.grid[r][c] === WallType.NONE && distToPlayer > 3) {
             const otherBot = s.bots.find(b => b.alive && b.r === r && b.c === c);
             if (!otherBot) {
-                // Initial direction facing into the board
-                const dir = edge === 0 ? Direction.DOWN :
-                            edge === 1 ? Direction.LEFT :
-                            edge === 2 ? Direction.UP : Direction.RIGHT;
+                // Initial state for bot
+                let dir: Direction = Direction.DOWN;
+                let visualR = r;
+                let visualC = c;
 
-                // Visual entry effect from outside
-                const visualR = edge === 0 ? -1 : edge === 2 ? GRID_SIZE : r;
-                const visualC = edge === 3 ? -1 : edge === 1 ? GRID_SIZE : c;
+                if (edge === 0) { // Top
+                    dir = Direction.DOWN;
+                    visualR = -1;
+                } else if (edge === 1) { // Right
+                    dir = Direction.LEFT;
+                    visualC = GRID_SIZE;
+                } else if (edge === 2) { // Bottom
+                    dir = Direction.UP;
+                    visualR = GRID_SIZE;
+                } else if (edge === 3) { // Left
+                    dir = Direction.RIGHT;
+                    visualC = -1;
+                }
 
                 s.bots.push({
                     r, c, dir, visualR, visualC,
-                    lastAction: 0, alive: true, type: 'bot'
+                    lastAction: performance.now(), // Delay first action to let entry animation play
+                    alive: true, type: 'bot'
                 });
                 s.botsSpawnedCount++;
                 return;
