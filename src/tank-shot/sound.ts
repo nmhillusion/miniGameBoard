@@ -2,8 +2,13 @@ export class SoundManager {
     private ctx: AudioContext | null = null;
     private masterGain: GainNode | null = null;
     private isMuted: boolean = false;
+    private bgm: HTMLAudioElement | null = null;
 
-    constructor() {}
+    constructor() {
+        this.bgm = new Audio("https://upload.wikimedia.org/wikipedia/commons/5/51/8bit_Dungeon_Boss_%28ISRC_USUAN1200067%29.mp3");
+        this.bgm.loop = true;
+        this.bgm.volume = 0.4;
+    }
 
     private init() {
         if (this.ctx) return;
@@ -15,7 +20,10 @@ export class SoundManager {
 
     private updateVolume() {
         if (this.masterGain) {
-            this.masterGain.gain.value = this.isMuted ? 0 : 0.6; // Louder master volume
+            this.masterGain.gain.value = this.isMuted ? 0 : 0.6;
+        }
+        if (this.bgm) {
+            this.bgm.muted = this.isMuted;
         }
     }
 
@@ -23,6 +31,19 @@ export class SoundManager {
         this.isMuted = !this.isMuted;
         this.updateVolume();
         return this.isMuted;
+    }
+
+    playBGM() {
+        if (this.bgm) {
+            this.bgm.play().catch(e => console.log("BGM play failed, waiting for interaction"));
+        }
+    }
+
+    stopBGM() {
+        if (this.bgm) {
+            this.bgm.pause();
+            this.bgm.currentTime = 0;
+        }
     }
 
     playShoot() {
@@ -77,12 +98,40 @@ export class SoundManager {
         noise.start();
     }
 
+    playLargeExplosion() {
+        this.init();
+        if (!this.ctx || !this.masterGain || this.isMuted) return;
+
+        // Multiple noise layers for a bigger boom
+        for (let j = 0; j < 3; j++) {
+            const bufferSize = this.ctx.sampleRate * (0.6 + j * 0.2);
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1500 - j * 400, this.ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.5 + j * 0.2);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6 + j * 0.2);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.masterGain);
+            noise.start(this.ctx.currentTime + j * 0.05);
+        }
+    }
+
     playKillBot() {
         this.init();
         if (!this.ctx || !this.masterGain || this.isMuted) return;
 
         const now = this.ctx.currentTime;
-        // High satisfying ping + small explosion
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
@@ -106,7 +155,6 @@ export class SoundManager {
         if (!this.ctx || !this.masterGain || this.isMuted) return;
 
         const now = this.ctx.currentTime;
-        // Heavy low thud + loud noise
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
@@ -122,9 +170,30 @@ export class SoundManager {
         osc.start();
         osc.stop(now + 0.8);
 
-        // Extra noise for player death
         this.playExplosion();
         setTimeout(() => this.playExplosion(), 100);
+    }
+
+    playCollect() {
+        this.init();
+        if (!this.ctx || !this.masterGain || this.isMuted) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(now + 0.2);
     }
 
     playWin() {
@@ -132,7 +201,7 @@ export class SoundManager {
         if (!this.ctx || !this.masterGain || this.isMuted) return;
 
         const now = this.ctx.currentTime;
-        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
         notes.forEach((freq, i) => {
             const osc = this.ctx!.createOscillator();
             const gain = this.ctx!.createGain();
@@ -151,7 +220,7 @@ export class SoundManager {
         if (!this.ctx || !this.masterGain || this.isMuted) return;
 
         const now = this.ctx.currentTime;
-        const notes = [440, 349.23, 293.66, 261.63]; // A4, F4, D4, C4
+        const notes = [440, 349.23, 293.66, 261.63];
         notes.forEach((freq, i) => {
             const osc = this.ctx!.createOscillator();
             const gain = this.ctx!.createGain();

@@ -1,5 +1,13 @@
 import { Direction, WallType } from './constants.js';
 
+export interface Item {
+    r: number;
+    c: number;
+    type: 'heart' | 'bomb';
+    alive: boolean;
+    spawnTime: number;
+}
+
 export interface Particle {
     x: number;
     y: number;
@@ -41,12 +49,15 @@ export interface GameState {
     player: Tank;
     bots: Tank[];
     bullets: Bullet[];
+    items: Item[];
     particles: Particle[];
     cell: number;
     width: number;
     height: number;
     offsetLeft: number;
     offsetTop: number;
+    lastHeartSpawn: number;
+    lastBombSpawn: number;
     won: boolean;
     isDead: boolean;
     totalBotsToSpawn: number;
@@ -73,12 +84,15 @@ export function initState(W: number, H: number): GameState {
         },
         bots: [],
         bullets: [],
+        items: [],
         particles: [],
         cell: 40,
         width: W,
         height: H,
         offsetLeft: 0,
         offsetTop: 0,
+        lastHeartSpawn: performance.now(),
+        lastBombSpawn: performance.now(),
         won: false,
         isDead: false,
         totalBotsToSpawn: 0,

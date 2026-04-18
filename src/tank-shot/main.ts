@@ -64,6 +64,8 @@ export function handleOverlayAction() {
     resizeCanvas();
     const ov = document.getElementById("overlay");
     if (ov) ov.style.display = "none";
+
+    soundManager.playBGM();
     
     if (s.animFrame !== null) cancelAnimationFrame(s.animFrame);
     s.animFrame = requestAnimationFrame(render);

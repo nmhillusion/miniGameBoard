@@ -22,7 +22,11 @@ export function updateHUD() {
 
     if (hLvl) hLvl.textContent = String(s.level);
     if (hBots) hBots.textContent = `${s.botsDestroyedCount}/${s.totalBotsToSpawn}`;
-    if (hLives) hLives.textContent = "❤️".repeat(Math.max(0, s.lives));
+    if (hLives) {
+        const active = Math.max(0, Math.min(5, s.lives));
+        const empty = 5 - active;
+        hLives.textContent = "❤️".repeat(active) + "🖤".repeat(empty);
+    }
     if (hScore) hScore.textContent = String(s.score);
 }
 
@@ -155,6 +159,160 @@ export function spawnBot() {
     }
 }
 
+export function spawnHeart() {
+    const s = gameContainer.state;
+    if (!s) return;
+
+    let attempts = 0;
+    while (attempts < 50) {
+        const r = Math.floor(Math.random() * GRID_SIZE);
+        const c = Math.floor(Math.random() * GRID_SIZE);
+
+        if (s.grid[r][c] === WallType.NONE) {
+            const hasTank = s.bots.find(b => b.alive && b.r === r && b.c === c) || (s.player.r === r && s.player.c === c);
+            const hasItem = s.items.find(i => i.alive && i.r === r && i.c === c);
+
+            if (!hasTank && !hasItem) {
+                s.items.push({
+                    r, c, type: 'heart', alive: true, spawnTime: performance.now()
+                });
+                return;
+            }
+        }
+        attempts++;
+    }
+}
+
+export function spawnBomb() {
+    const s = gameContainer.state;
+    if (!s) return;
+
+    let attempts = 0;
+    while (attempts < 50) {
+        const r = Math.floor(Math.random() * GRID_SIZE);
+        const c = Math.floor(Math.random() * GRID_SIZE);
+
+        if (s.grid[r][c] === WallType.NONE) {
+            const hasTank = s.bots.find(b => b.alive && b.r === r && b.c === c) || (s.player.r === r && s.player.c === c);
+            const hasItem = s.items.find(i => i.alive && i.r === r && i.c === c);
+
+            if (!hasTank && !hasItem) {
+                s.items.push({
+                    r, c, type: 'bomb', alive: true, spawnTime: performance.now()
+                });
+                return;
+            }
+        }
+        attempts++;
+    }
+}
+
+export function explodeBomb(r: number, c: number) {
+    const s = gameContainer.state;
+    if (!s) return;
+
+    soundManager.playLargeExplosion();
+    s.shakeTimer = performance.now() + 1000;
+    s.shakeIntensity = 15;
+
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            const nr = r + dr;
+            const nc = c + dc;
+
+            if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                // Destroy walls (even permanent)
+                s.grid[nr][nc] = WallType.NONE;
+                spawnExplosion(nr, nc, '#ef4444'); // Red explosion
+
+                // Kill tanks
+                if (s.player.alive && s.player.r === nr && s.player.c === nc) {
+                    s.player.alive = false;
+                    s.lives--;
+                    soundManager.playKillPlayer();
+                    if (s.lives <= 0) {
+                        s.isDead = true;
+                        soundManager.playLose();
+                        showOverlay("MISSION FAILED", "You were caught in a bomb blast!", "RETRY");
+                    } else {
+                        setTimeout(() => {
+                            s.player.alive = true;
+                            s.player.r = GRID_SIZE - 2;
+                            s.player.c = Math.floor(GRID_SIZE / 2);
+                        }, 1000);
+                    }
+                }
+
+                for (const bot of s.bots) {
+                    if (bot.alive && bot.r === nr && bot.c === nc) {
+                        bot.alive = false;
+                        s.score += 200;
+                        s.botsDestroyedCount++;
+                        soundManager.playKillBot();
+                        spawnBot();
+                    }
+                }
+            }
+        }
+    }
+    updateHUD();
+}
+
+function updateItems(ts: number) {
+    const s = gameContainer.state;
+    if (!s || s.won || s.isDead) return;
+
+    // Periodic heart spawn (every 20-40s)
+    if (ts - s.lastHeartSpawn > 20000 + Math.random() * 20000) {
+        spawnHeart();
+        s.lastHeartSpawn = ts;
+    }
+
+    // Periodic bomb spawn (every 30-50s)
+    if (ts - s.lastBombSpawn > 30000 + Math.random() * 20000) {
+        spawnBomb();
+        s.lastBombSpawn = ts;
+    }
+
+    const DESPAWN_TIME = 20000; // Hearts
+    const BOMB_DETONATE_TIME = 30000; // Bombs
+
+    for (let i = s.items.length - 1; i >= 0; i--) {
+        const item = s.items[i];
+        if (!item.alive) continue;
+
+        const age = ts - item.spawnTime;
+
+        // Collection (Hearts only)
+        if (item.type === 'heart') {
+            if (s.player.alive && s.player.r === item.r && s.player.c === item.c) {
+                item.alive = false;
+                if (s.lives < 5) {
+                    s.lives++;
+                    soundManager.playCollect();
+                } else {
+                    s.score += 500;
+                    soundManager.playCollect();
+                }
+                updateHUD();
+                continue;
+            }
+
+            if (age > DESPAWN_TIME) {
+                item.alive = false;
+            }
+        } else if (item.type === 'bomb') {
+            // Auto-detonate
+            if (age > BOMB_DETONATE_TIME) {
+                item.alive = false;
+                explodeBomb(item.r, item.c);
+            }
+        }
+    }
+
+    s.items = s.items.filter(i => i.alive);
+}
+
 export function tryMove(tank: Tank, dir: Direction) {
     const s = gameContainer.state;
     if (!s || !tank.alive) return;
@@ -219,6 +377,15 @@ function updateBullets(ts: number) {
         const gr = Math.round(b.visualY);
         const gc = Math.round(b.visualX);
 
+        // Hit Item (Bomb)
+        const item = s.items.find(it => it.alive && it.r === gr && it.c === gc);
+        if (item && item.type === 'bomb') {
+            item.alive = false;
+            b.active = false;
+            explodeBomb(item.r, item.c);
+            continue;
+        }
+
         // Out of bounds
         if (gr < 0 || gr >= GRID_SIZE || gc < 0 || gc >= GRID_SIZE) {
             b.active = false;
@@ -245,6 +412,7 @@ function updateBullets(ts: number) {
             spawnExplosion(s.player.r, s.player.c, TANK_COLORS.PLAYER);
             if (s.lives <= 0) {
                 s.isDead = true;
+                soundManager.stopBGM();
                 soundManager.playLose();
                 showOverlay("MISSION FAILED", `You destroyed ${s.score / 100} bots, but your tank was lost. Restart the campaign?`, "RETRY");
             } else {
@@ -279,6 +447,7 @@ function updateBullets(ts: number) {
 
     if (s.botsDestroyedCount >= s.totalBotsToSpawn && !s.won) {
         s.won = true;
+        soundManager.stopBGM();
         soundManager.playWin();
         showOverlay("MISSION ACCOMPLISHED", `Level ${s.level} complete. Total bots destroyed: ${s.botsDestroyedCount}. Proceed to the next zone?`, "NEXT LEVEL");
     }
@@ -395,4 +564,5 @@ function updateBots(ts: number) {
 export function tick(ts: number) {
     updateBullets(ts);
     updateBots(ts);
+    updateItems(ts);
 }

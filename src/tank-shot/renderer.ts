@@ -134,6 +134,30 @@ export function render(ts: number) {
         ctx.fill();
     }
 
+    // Draw Items (Hearts)
+    for (const item of s.items) {
+        if (!item.alive) continue;
+        const x = s.offsetLeft + (item.c + 0.5) * s.cell;
+        const y = s.offsetTop + (item.r + 0.5) * s.cell;
+        
+        const age = ts - item.spawnTime;
+        const maxAge = item.type === 'heart' ? 20000 : 30000;
+        const isExpiring = age > (maxAge - 5000);
+        
+        // Faster blinking for bombs
+        const blinkRate = item.type === 'bomb' && age > (maxAge - 3000) ? 100 : 200;
+        const blink = isExpiring ? Math.floor(ts / blinkRate) % 2 === 0 : true;
+
+        if (blink) {
+            const pulseRate = item.type === 'bomb' ? 100 : 200;
+            const pulse = 1 + Math.sin(ts / pulseRate) * 0.1;
+            ctx.font = `${Math.floor(s.cell * 0.6 * pulse)}px Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(item.type === 'heart' ? "❤️" : "💣", x, y);
+        }
+    }
+
     // Draw Particles
     for (let i = s.particles.length - 1; i >= 0; i--) {
         const p = s.particles[i];
