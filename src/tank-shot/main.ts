@@ -2,7 +2,7 @@ import { state as gameContainer, initState } from './state.js';
 import { initLevel, updateHUD } from './game.js';
 import { setContext, render } from './renderer.js';
 import { initInputs } from './input.js';
-import { CELL, GRID_SIZE } from './constants.js';
+import { GRID_SIZE } from './constants.js';
 
 const canvas = document.getElementById("gc") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -17,8 +17,14 @@ function resizeCanvas() {
     canvas.width = s.width;
     canvas.height = s.height;
 
+    // Calculate dynamic cell size to fit screen
+    const padding = 20;
+    const availW = s.width - padding * 2;
+    const availH = s.height - padding * 2;
+    s.cell = Math.floor(Math.min(availW / GRID_SIZE, availH / GRID_SIZE));
+
     // Center the grid
-    const boardSize = GRID_SIZE * CELL;
+    const boardSize = GRID_SIZE * s.cell;
     s.offsetLeft = (s.width - boardSize) / 2;
     s.offsetTop = (s.height - boardSize) / 2;
 }

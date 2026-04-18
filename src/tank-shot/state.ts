@@ -42,6 +42,7 @@ export interface GameState {
     bots: Tank[];
     bullets: Bullet[];
     particles: Particle[];
+    cell: number;
     width: number;
     height: number;
     offsetLeft: number;
@@ -73,6 +74,7 @@ export function initState(W: number, H: number): GameState {
         bots: [],
         bullets: [],
         particles: [],
+        cell: 40,
         width: W,
         height: H,
         offsetLeft: 0,

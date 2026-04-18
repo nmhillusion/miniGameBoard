@@ -148,3 +148,73 @@ body {
     opacity: 1;
   }
 }
+
+#controls-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 2rem;
+  box-sizing: border-box;
+
+  #joystick-zone, #fire-zone {
+    pointer-events: auto;
+    user-select: none;
+  }
+
+  #joystick-base {
+    width: 130px;
+    height: 130px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+
+  #joystick-thumb {
+    width: 55px;
+    height: 55px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.05s;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+
+  #btn-fire {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: transform 0.1s, background 0.1s, border-color 0.1s;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+
+    &:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  #controls-layer {
+    display: none; // Hide on desktop by default, or keep visible for testing
+  }
+}

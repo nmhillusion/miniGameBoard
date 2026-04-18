@@ -1,5 +1,5 @@
 import { state as gameContainer } from './state.js';
-import { CELL, TANK_COLORS, WallType, GRID_SIZE, Direction } from './constants.js';
+import { TANK_COLORS, WallType, GRID_SIZE, Direction } from './constants.js';
 import { tick } from './game.js';
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -13,11 +13,11 @@ function drawTank(r: number, c: number, dir: Direction, color: string, isPlayer:
     const s = gameContainer.state;
     if (!s) return;
 
-    const x = s.offsetLeft + c * CELL;
-    const y = s.offsetTop + r * CELL;
-    const centerX = x + CELL / 2;
-    const centerY = y + CELL / 2;
-    const size = CELL * 0.8;
+    const x = s.offsetLeft + c * s.cell;
+    const y = s.offsetTop + r * s.cell;
+    const centerX = x + s.cell / 2;
+    const centerY = y + s.cell / 2;
+    const size = s.cell * 0.8;
 
     ctx.save();
     ctx.translate(centerX, centerY);
@@ -48,22 +48,22 @@ function drawWall(r: number, c: number, type: WallType) {
     const s = gameContainer.state;
     if (!s) return;
 
-    const x = s.offsetLeft + c * CELL;
-    const y = s.offsetTop + r * CELL;
+    const x = s.offsetLeft + c * s.cell;
+    const y = s.offsetTop + r * s.cell;
 
     if (type === WallType.PERMANENT) {
         ctx.fillStyle = '#059669'; // Emerald
-        ctx.fillRect(x + 2, y + 2, CELL - 4, CELL - 4);
+        ctx.fillRect(x + 2, y + 2, s.cell - 4, s.cell - 4);
         ctx.strokeStyle = '#10b981';
-        ctx.strokeRect(x + 5, y + 5, CELL - 10, CELL - 10);
+        ctx.strokeRect(x + 5, y + 5, s.cell - 10, s.cell - 10);
     } else if (type === WallType.DESTRUCTIBLE) {
         ctx.fillStyle = '#78350f'; // Amber/Brown
-        ctx.fillRect(x + 2, y + 2, CELL - 4, CELL - 4);
+        ctx.fillRect(x + 2, y + 2, s.cell - 4, s.cell - 4);
         // Brick pattern
         ctx.strokeStyle = '#92400e';
         ctx.beginPath();
-        ctx.moveTo(x + 2, y + CELL/2); ctx.lineTo(x + CELL - 2, y + CELL/2);
-        ctx.moveTo(x + CELL/2, y + 2); ctx.lineTo(x + CELL/2, y + CELL/2);
+        ctx.moveTo(x + 2, y + s.cell/2); ctx.lineTo(x + s.cell - 2, y + s.cell/2);
+        ctx.moveTo(x + s.cell/2, y + 2); ctx.lineTo(x + s.cell/2, y + s.cell/2);
         ctx.stroke();
     }
 }
@@ -92,12 +92,12 @@ export function render(ts: number) {
     ctx.lineWidth = 1;
     for (let i = 0; i <= GRID_SIZE; i++) {
         ctx.beginPath();
-        ctx.moveTo(s.offsetLeft + i * CELL, s.offsetTop);
-        ctx.lineTo(s.offsetLeft + i * CELL, s.offsetTop + GRID_SIZE * CELL);
+        ctx.moveTo(s.offsetLeft + i * s.cell, s.offsetTop);
+        ctx.lineTo(s.offsetLeft + i * s.cell, s.offsetTop + GRID_SIZE * s.cell);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(s.offsetLeft, s.offsetTop + i * CELL);
-        ctx.lineTo(s.offsetLeft + GRID_SIZE * CELL, s.offsetTop + i * CELL);
+        ctx.moveTo(s.offsetLeft, s.offsetTop + i * s.cell);
+        ctx.lineTo(s.offsetLeft + GRID_SIZE * s.cell, s.offsetTop + i * s.cell);
         ctx.stroke();
     }
 
@@ -130,7 +130,7 @@ export function render(ts: number) {
     ctx.fillStyle = '#fbbf24';
     for (const b of s.bullets) {
         ctx.beginPath();
-        ctx.arc(s.offsetLeft + (b.visualX + 0.5) * CELL, s.offsetTop + (b.visualY + 0.5) * CELL, 4, 0, Math.PI * 2);
+        ctx.arc(s.offsetLeft + (b.visualX + 0.5) * s.cell, s.offsetTop + (b.visualY + 0.5) * s.cell, 4, 0, Math.PI * 2);
         ctx.fill();
     }
 

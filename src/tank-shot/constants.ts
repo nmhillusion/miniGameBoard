@@ -1,5 +1,4 @@
 export const GRID_SIZE = 13;
-export const CELL = 40; // Base cell size, will be scaled in renderer if needed
 export const REVEAL_DUR = 3000;
 
 export enum Direction {

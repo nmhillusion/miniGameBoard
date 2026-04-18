@@ -1,5 +1,5 @@
 import { state as gameContainer, GameState, Tank, Bullet, Particle } from './state.js';
-import { GRID_SIZE, Direction, DIR_VECTORS, WallType, CELL, SHAKE_DUR, EXPLOSION_PARTICLES, TANK_COLORS } from './constants.js';
+import { GRID_SIZE, Direction, DIR_VECTORS, WallType, SHAKE_DUR, EXPLOSION_PARTICLES, TANK_COLORS } from './constants.js';
 import { showOverlay } from './renderer.js';
 
 export function setMsg(text: string) {
@@ -28,8 +28,8 @@ export function updateHUD() {
 export function spawnExplosion(r: number, c: number, color: string) {
     const s = gameContainer.state;
     if (!s) return;
-    const x = s.offsetLeft + (c + 0.5) * CELL;
-    const y = s.offsetTop + (r + 0.5) * CELL;
+    const x = s.offsetLeft + (c + 0.5) * s.cell;
+    const y = s.offsetTop + (r + 0.5) * s.cell;
     for (let i = 0; i < EXPLOSION_PARTICLES; i++) {
         s.particles.push({
             x, y,
