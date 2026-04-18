@@ -1,6 +1,7 @@
 import { state as gameContainer, GameState, Tank, Bullet, Particle } from './state.js';
 import { GRID_SIZE, Direction, DIR_VECTORS, WallType, SHAKE_DUR, EXPLOSION_PARTICLES, TANK_COLORS } from './constants.js';
 import { showOverlay } from './renderer.js';
+import { soundManager } from './sound.js';
 
 export function setMsg(text: string) {
     const bar = document.getElementById("msg-bar");
@@ -28,6 +29,7 @@ export function updateHUD() {
 export function spawnExplosion(r: number, c: number, color: string) {
     const s = gameContainer.state;
     if (!s) return;
+    soundManager.playExplosion();
     const x = s.offsetLeft + (c + 0.5) * s.cell;
     const y = s.offsetTop + (r + 0.5) * s.cell;
     for (let i = 0; i < EXPLOSION_PARTICLES; i++) {
@@ -187,6 +189,8 @@ export function shoot(tank: Tank) {
     if (now - tank.lastAction < cooldown) return;
     tank.lastAction = now;
 
+    soundManager.playShoot();
+
     s.bullets.push({
         r: tank.r,
         c: tank.c,
@@ -237,9 +241,11 @@ function updateBullets(ts: number) {
             s.player.alive = false;
             b.active = false;
             s.lives--;
+            soundManager.playKillPlayer();
             spawnExplosion(s.player.r, s.player.c, TANK_COLORS.PLAYER);
             if (s.lives <= 0) {
                 s.isDead = true;
+                soundManager.playLose();
                 showOverlay("MISSION FAILED", `You destroyed ${s.score / 100} bots, but your tank was lost. Restart the campaign?`, "RETRY");
             } else {
                 setTimeout(() => {
@@ -256,6 +262,7 @@ function updateBullets(ts: number) {
                     b.active = false;
                     s.score += 100;
                     s.botsDestroyedCount++;
+                    soundManager.playKillBot();
                     spawnExplosion(bot.r, bot.c, TANK_COLORS.BOT);
                     
                     spawnBot();
@@ -272,6 +279,7 @@ function updateBullets(ts: number) {
 
     if (s.botsDestroyedCount >= s.totalBotsToSpawn && !s.won) {
         s.won = true;
+        soundManager.playWin();
         showOverlay("MISSION ACCOMPLISHED", `Level ${s.level} complete. Total bots destroyed: ${s.botsDestroyedCount}. Proceed to the next zone?`, "NEXT LEVEL");
     }
 }

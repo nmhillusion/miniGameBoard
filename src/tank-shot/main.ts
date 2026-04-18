@@ -3,6 +3,7 @@ import { initLevel, updateHUD } from './game.js';
 import { setContext, render } from './renderer.js';
 import { initInputs } from './input.js';
 import { GRID_SIZE } from './constants.js';
+import { soundManager } from './sound.js';
 
 const canvas = document.getElementById("gc") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -33,6 +34,12 @@ window.addEventListener("resize", resizeCanvas);
 
 document.getElementById("btn-home")?.addEventListener("click", () => {
     window.location.href = "/index.html";
+});
+
+document.getElementById("btn-mute")?.addEventListener("click", (e) => {
+    const muted = soundManager.toggleMute();
+    const btn = e.currentTarget as HTMLButtonElement;
+    btn.textContent = muted ? "🔇" : "🔊";
 });
 
 export function handleOverlayAction() {
