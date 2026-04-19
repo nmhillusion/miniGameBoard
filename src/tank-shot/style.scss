@@ -12,6 +12,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   align-items: center;
   position: relative;
@@ -234,6 +235,7 @@ body {
 
   #controls-layer {
     padding: 1rem;
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
   }
 
   #top-bar {
