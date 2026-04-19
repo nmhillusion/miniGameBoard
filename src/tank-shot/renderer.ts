@@ -8,10 +8,14 @@ export function setContext(c: CanvasRenderingContext2D | null) {
     ctx = c;
 }
 
-function drawTank(r: number, c: number, dir: Direction, color: string, isPlayer: boolean) {
+function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
     if (!ctx) return;
     const s = gameContainer.state;
     if (!s) return;
+
+    const r = tank.visualR;
+    const c = tank.visualC;
+    const dir = tank.dir;
 
     const x = s.offsetLeft + c * s.cell;
     const y = s.offsetTop + r * s.cell;
@@ -30,22 +34,36 @@ function drawTank(r: number, c: number, dir: Direction, color: string, isPlayer:
     ctx.shadowOffsetY = 3;
 
     // 2. Tracks (Left & Right)
-    const trackW = size * 0.2;
+    const trackW = size * 0.22;
     const trackH = size;
-    ctx.fillStyle = '#1e293b';
+    const isMoving = Math.hypot(tank.r - tank.visualR, tank.c - tank.visualC) > 0.01;
     
-    // Draw segmented tracks
+    // Track Animation Offset
+    const segmentGap = 8;
+    const moveOffset = isMoving ? (ts * 0.15) % segmentGap : 0;
+
     const drawTrack = (tx: number) => {
+        // Track Base (Metallic Silver/Gray)
+        const trackGrad = ctx.createLinearGradient(tx - trackW/2, 0, tx + trackW/2, 0);
+        trackGrad.addColorStop(0, '#334155');
+        trackGrad.addColorStop(0.5, '#64748b');
+        trackGrad.addColorStop(1, '#334155');
+        
+        ctx.fillStyle = trackGrad;
         ctx.beginPath();
-        ctx.roundRect(tx - trackW/2, -trackH/2, trackW, trackH, 3);
+        ctx.roundRect(tx - trackW/2, -trackH/2, trackW, trackH, 4);
         ctx.fill();
-        // Track segments
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 1;
-        for (let i = -trackH/2 + 4; i < trackH/2; i += 6) {
+
+        // Track segments (Animated - much brighter)
+        ctx.strokeStyle = '#cbd5e1'; // Lighter gray/silver
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]); 
+
+        for (let i = -trackH/2 - moveOffset; i < trackH/2 + moveOffset; i += segmentGap) {
+            if (i < -trackH/2 || i > trackH/2) continue;
             ctx.beginPath();
-            ctx.moveTo(tx - trackW/2, i);
-            ctx.lineTo(tx + trackW/2, i);
+            ctx.moveTo(tx - trackW/2 + 1, i);
+            ctx.lineTo(tx + trackW/2 - 1, i);
             ctx.stroke();
         }
     };
@@ -211,14 +229,14 @@ export function render(ts: number) {
     if (s.player.alive) {
         s.player.visualR += (s.player.r - s.player.visualR) * lerpSpeed;
         s.player.visualC += (s.player.c - s.player.visualC) * lerpSpeed;
-        drawTank(s.player.visualR, s.player.visualC, s.player.dir, TANK_COLORS.PLAYER, true);
+        drawTank(s.player, ts, TANK_COLORS.PLAYER, true);
     }
 
     for (const bot of s.bots) {
         if (bot.alive) {
             bot.visualR += (bot.r - bot.visualR) * lerpSpeed;
             bot.visualC += (bot.c - bot.visualC) * lerpSpeed;
-            drawTank(bot.visualR, bot.visualC, bot.dir, TANK_COLORS.BOT, false);
+            drawTank(bot, ts, TANK_COLORS.BOT, false);
         }
     }
 

@@ -60,6 +60,7 @@ export function initLevel(lvl: number) {
     s.isDead = false;
     s.bullets = [];
     s.particles = [];
+    s.items = [];
 
     // Build grid
     s.grid = Array.from({ length: s.gridSize }, () => Array(s.gridSize).fill(WallType.NONE));
@@ -342,10 +343,18 @@ export function shoot(tank: Tank) {
     const s = gameContainer.state;
     if (!s || !tank.alive) return;
 
-    const cooldown = tank.type === 'player' ? 250 : 1000;
-    const now = performance.now();
-    if (now - tank.lastAction < cooldown) return;
-    tank.lastAction = now;
+    if (tank.type === 'player') {
+        const activeCount = s.bullets.filter(b => b.active && b.owner === 'player').length;
+        if (activeCount >= 3) return;
+
+        const now = performance.now();
+        if (now - tank.lastAction < 100) return;
+        tank.lastAction = now;
+    } else {
+        const now = performance.now();
+        if (now - tank.lastAction < 1000) return;
+        tank.lastAction = now;
+    }
 
     soundManager.playShoot();
 
