@@ -288,20 +288,26 @@ function updateItems(ts: number) {
     const s = gameContainer.state;
     if (!s || s.won || s.isDead) return;
 
-    // Periodic heart spawn (every 20-40s)
-    if (ts - s.lastHeartSpawn > 20000 + Math.random() * 20000) {
+    const hasHeart = s.items.some(i => i.alive && i.type === 'heart');
+    if (hasHeart) {
+        s.lastHeartSpawn = ts;
+    } else if (ts - s.lastHeartSpawn > 20000 + Math.random() * 20000) {
         spawnHeart();
         s.lastHeartSpawn = ts;
     }
 
-    // Periodic bomb spawn (every 30-50s)
-    if (ts - s.lastBombSpawn > 30000 + Math.random() * 20000) {
+    const hasBomb = s.items.some(i => i.alive && i.type === 'bomb');
+    if (hasBomb) {
+        s.lastBombSpawn = ts;
+    } else if (ts - s.lastBombSpawn > 30000 + Math.random() * 20000) {
         spawnBomb();
         s.lastBombSpawn = ts;
     }
 
-    // Periodic powerup spawn (every 40-60s)
-    if (ts - s.lastPowerupSpawn > 40000 + Math.random() * 20000) {
+    const hasPowerup = s.items.some(i => i.alive && i.type === 'powerup');
+    if (hasPowerup) {
+        s.lastPowerupSpawn = ts;
+    } else if (ts - s.lastPowerupSpawn > 40000 + Math.random() * 20000) {
         spawnPowerup();
         s.lastPowerupSpawn = ts;
     }
