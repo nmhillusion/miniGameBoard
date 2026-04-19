@@ -150,7 +150,8 @@ export function spawnBot() {
                 s.bots.push({
                     r, c, dir, visualR, visualC,
                     lastAction: performance.now(), // Delay first action to let entry animation play
-                    alive: true, type: 'bot'
+                    alive: true, type: 'bot',
+                    powerType: 'none', powerTimer: 0
                 });
                 s.botsSpawnedCount++;
                 return;
@@ -184,6 +185,9 @@ export function spawnHeart() {
     }
 }
 
+    }
+}
+
 export function spawnBomb() {
     const s = gameContainer.state;
     if (!s) return;
@@ -200,6 +204,30 @@ export function spawnBomb() {
             if (!hasTank && !hasItem) {
                 s.items.push({
                     r, c, type: 'bomb', alive: true, spawnTime: performance.now()
+                });
+                return;
+            }
+        }
+        attempts++;
+    }
+}
+
+export function spawnPowerup() {
+    const s = gameContainer.state;
+    if (!s) return;
+
+    let attempts = 0;
+    while (attempts < 50) {
+        const r = Math.floor(Math.random() * s.gridSize);
+        const c = Math.floor(Math.random() * s.gridSize);
+
+        if (s.grid[r][c] === WallType.NONE) {
+            const hasTank = s.bots.find(b => b.alive && b.r === r && b.c === c) || (s.player.alive && s.player.r === r && s.player.c === c);
+            const hasItem = s.items.find(i => i.alive && i.r === r && i.c === c);
+
+            if (!hasTank && !hasItem) {
+                s.items.push({
+                    r, c, type: 'powerup', alive: true, spawnTime: performance.now()
                 });
                 return;
             }
@@ -275,6 +303,12 @@ function updateItems(ts: number) {
         s.lastBombSpawn = ts;
     }
 
+    // Periodic powerup spawn (every 40-60s)
+    if (ts - s.lastPowerupSpawn > 40000 + Math.random() * 20000) {
+        spawnPowerup();
+        s.lastPowerupSpawn = ts;
+    }
+
     const DESPAWN_TIME = 20000; // Hearts
     const BOMB_DETONATE_TIME = 30000; // Bombs
 
@@ -299,6 +333,29 @@ function updateItems(ts: number) {
                 continue;
             }
 
+            if (age > DESPAWN_TIME) {
+                item.alive = false;
+            }
+        } else if (item.type === 'powerup') {
+            // Collection by Player
+            if (s.player.alive && s.player.r === item.r && s.player.c === item.c) {
+                item.alive = false;
+                s.player.powerType = 'penetrating';
+                s.player.powerTimer = ts + 15000; // 15 seconds
+                soundManager.playCollect();
+                setMsg("PENETRATING BULLETS ACTIVE!");
+                continue;
+            }
+            // Collection by Bots
+            for (const bot of s.bots) {
+                if (bot.alive && bot.r === item.r && bot.c === item.c) {
+                    item.alive = false;
+                    bot.powerType = 'penetrating';
+                    bot.powerTimer = ts + 15000;
+                    soundManager.playCollect();
+                    break;
+                }
+            }
             if (age > DESPAWN_TIME) {
                 item.alive = false;
             }
@@ -365,7 +422,8 @@ export function shoot(tank: Tank) {
         owner: tank.type,
         active: true,
         visualX: tank.c,
-        visualY: tank.r
+        visualY: tank.r,
+        penetrating: tank.powerType === 'penetrating'
     });
 }
 
@@ -420,9 +478,9 @@ function updateBullets(ts: number) {
         // Hit Wall
         const wall = s.grid[gr][gc];
         if (wall !== WallType.NONE) {
-            if (wall === WallType.DESTRUCTIBLE) {
+            if (wall === WallType.DESTRUCTIBLE || (b.penetrating && wall === WallType.PERMANENT)) {
                 s.grid[gr][gc] = WallType.NONE;
-                spawnExplosion(gr, gc, '#eab308');
+                spawnExplosion(gr, gc, b.penetrating ? '#38bdf8' : '#eab308');
             }
             b.active = false;
             continue;
@@ -587,6 +645,22 @@ function updateBots(ts: number) {
 }
 
 export function tick(ts: number) {
+    const s = gameContainer.state;
+    if (s) {
+        // Update powerup timers
+        if (s.player.powerTimer > 0 && ts > s.player.powerTimer) {
+            s.player.powerTimer = 0;
+            s.player.powerType = 'none';
+            setMsg("POWERUP EXPIRED");
+        }
+        for (const bot of s.bots) {
+            if (bot.powerTimer > 0 && ts > bot.powerTimer) {
+                bot.powerTimer = 0;
+                bot.powerType = 'none';
+            }
+        }
+    }
+
     updateBullets(ts);
     updateBots(ts);
     updateItems(ts);

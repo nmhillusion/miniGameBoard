@@ -3,7 +3,7 @@ import { Direction, WallType } from './constants.js';
 export interface Item {
     r: number;
     c: number;
-    type: 'heart' | 'bomb';
+    type: 'heart' | 'bomb' | 'powerup';
     alive: boolean;
     spawnTime: number;
 }
@@ -28,6 +28,7 @@ export interface Bullet {
     // For smooth sub-grid movement if desired, but we'll stick to grid-steps for now or small increments
     visualX: number;
     visualY: number;
+    penetrating: boolean;
 }
 
 export interface Tank {
@@ -39,6 +40,8 @@ export interface Tank {
     lastAction: number;
     alive: boolean;
     type: 'player' | 'bot';
+    powerType: 'none' | 'penetrating';
+    powerTimer: number;
 }
 
 export interface GameState {
@@ -58,6 +61,7 @@ export interface GameState {
     offsetTop: number;
     lastHeartSpawn: number;
     lastBombSpawn: number;
+    lastPowerupSpawn: number;
     won: boolean;
     isDead: boolean;
     totalBotsToSpawn: number;
@@ -80,8 +84,8 @@ export function initState(W: number, H: number, gridSize: number): GameState {
         lives: 3,
         grid: [],
         player: {
-            r: 0, c: 0, dir: Direction.UP, visualR: 0, visualC: 0,
-            lastAction: 0, alive: true, type: 'player'
+            lastAction: 0, alive: true, type: 'player',
+            powerType: 'none', powerTimer: 0
         },
         bots: [],
         bullets: [],
@@ -94,6 +98,7 @@ export function initState(W: number, H: number, gridSize: number): GameState {
         offsetTop: 0,
         lastHeartSpawn: performance.now(),
         lastBombSpawn: performance.now(),
+        lastPowerupSpawn: performance.now(),
         won: false,
         isDead: false,
         totalBotsToSpawn: 0,

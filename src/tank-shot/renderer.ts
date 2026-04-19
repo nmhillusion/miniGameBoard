@@ -124,7 +124,17 @@ function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
     ctx.beginPath();
     ctx.arc(0, 0, turretSize/6, 0, Math.PI * 2);
     ctx.fill();
-    if (isPlayer) {
+
+    // Powerup Aura
+    if (tank.powerType === 'penetrating') {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(0, 0, turretSize/2 + 2, 0, Math.PI * 2);
+        ctx.stroke();
+    } else if (isPlayer) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#38bdf8';
         ctx.stroke();
@@ -154,26 +164,76 @@ function drawWall(r: number, c: number, type: WallType) {
 
     const x = Math.floor(s.offsetLeft + c * s.cell);
     const y = Math.floor(s.offsetTop + r * s.cell);
-    const cellSize = s.cell;
+    const cs = s.cell;
 
     if (type === WallType.PERMANENT) {
-        ctx.fillStyle = '#065f46'; // Darker Emerald
-        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
-        
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = Math.max(1, cellSize * 0.05);
-        ctx.strokeRect(x + 4, y + 4, cellSize - 8, cellSize - 8);
-    } else if (type === WallType.DESTRUCTIBLE) {
-        ctx.fillStyle = '#78350f'; // Brown
-        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
-        
-        // Brick pattern
-        ctx.strokeStyle = '#92400e';
-        ctx.lineWidth = 1;
+        // Metallic Reinforced Plate
+        const grad = ctx.createLinearGradient(x, y, x + cs, y + cs);
+        grad.addColorStop(0, '#1e293b');
+        grad.addColorStop(0.5, '#475569');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+
+        // Steel frame
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 4, y + 4, cs - 8, cs - 8);
+
+        // Rivets
+        ctx.fillStyle = '#cbd5e1';
+        const rSize = Math.max(2, cs * 0.08);
+        const pad = cs * 0.15;
+        [
+            [pad, pad], [cs - pad, pad],
+            [pad, cs - pad], [cs - pad, cs - pad]
+        ].forEach(([px, py]) => {
+            ctx.beginPath();
+            ctx.arc(x + px, y + py, rSize/2, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // "X" brace detail
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
         ctx.beginPath();
-        ctx.moveTo(x + 1, y + cellSize/2); ctx.lineTo(x + cellSize - 1, y + cellSize/2);
-        ctx.moveTo(x + cellSize/2, y + 1); ctx.lineTo(x + cellSize/2, y + cellSize/2);
+        ctx.moveTo(x + 6, y + 6); ctx.lineTo(x + cs - 6, y + cs - 6);
+        ctx.moveTo(x + cs - 6, y + 6); ctx.lineTo(x + 6, y + cs - 6);
         ctx.stroke();
+
+    } else if (type === WallType.DESTRUCTIBLE) {
+        // Red Brick Pattern
+        ctx.fillStyle = '#451a03'; // Mortar color
+        ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+
+        const rows = 4;
+        const cols = 2;
+        const bh = (cs - 2) / rows;
+        const bw = (cs - 2) / cols;
+
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols + 1; col++) {
+                const offset = (row % 2) * (bw / 2);
+                const bx = x + 1 + col * bw - offset;
+                const by = y + 1 + row * bh;
+                
+                // Only draw if within cell bounds
+                const drawW = Math.min(bw - 1, x + cs - 1 - bx);
+                if (drawW <= 0) continue;
+                const finalX = Math.max(x + 1, bx);
+                const finalW = drawW - (finalX - bx);
+
+                const bGrad = ctx.createLinearGradient(finalX, by, finalX, by + bh);
+                bGrad.addColorStop(0, '#92400e');
+                bGrad.addColorStop(1, '#78350f');
+                
+                ctx.fillStyle = bGrad;
+                ctx.fillRect(finalX, by, finalW, bh - 1);
+                
+                // Brick highlight
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.strokeRect(finalX + 1, by + 1, finalW - 2, 1);
+            }
+        }
     }
 }
 
@@ -241,13 +301,21 @@ export function render(ts: number) {
     }
 
     // Draw Bullets
-    ctx.fillStyle = '#fbbf24';
     const bulletSize = Math.max(3, s.cell * 0.1);
     for (const b of s.bullets) {
         ctx.beginPath();
-        ctx.arc(s.offsetLeft + (b.visualX + 0.5) * s.cell, s.offsetTop + (b.visualY + 0.5) * s.cell, bulletSize, 0, Math.PI * 2);
+        if (b.penetrating) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#38bdf8';
+        } else {
+            ctx.fillStyle = '#fbbf24';
+            ctx.shadowBlur = 0;
+        }
+        ctx.arc(s.offsetLeft + (b.visualX + 0.5) * s.cell, s.offsetTop + (b.visualY + 0.5) * s.cell, b.penetrating ? bulletSize * 1.5 : bulletSize, 0, Math.PI * 2);
         ctx.fill();
     }
+    ctx.shadowBlur = 0;
 
     // Draw Items (Hearts)
     for (const item of s.items) {
@@ -269,7 +337,10 @@ export function render(ts: number) {
             ctx.font = `${Math.floor(s.cell * 0.6 * pulse)}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(item.type === 'heart' ? "❤️" : "💣", x, y);
+            let icon = "❤️";
+            if (item.type === 'bomb') icon = "💣";
+            if (item.type === 'powerup') icon = "⚡";
+            ctx.fillText(icon, x, y);
         }
     }
 
