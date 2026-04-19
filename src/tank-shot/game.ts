@@ -1,5 +1,5 @@
 import { state as gameContainer, GameState, Tank, Bullet, Particle } from './state.js';
-import { GRID_SIZE, Direction, DIR_VECTORS, WallType, SHAKE_DUR, EXPLOSION_PARTICLES, TANK_COLORS } from './constants.js';
+import { Direction, DIR_VECTORS, WallType, SHAKE_DUR, EXPLOSION_PARTICLES, TANK_COLORS } from './constants.js';
 import { showOverlay } from './renderer.js';
 import { soundManager } from './sound.js';
 
@@ -62,14 +62,14 @@ export function initLevel(lvl: number) {
     s.particles = [];
 
     // Build grid
-    s.grid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(WallType.NONE));
+    s.grid = Array.from({ length: s.gridSize }, () => Array(s.gridSize).fill(WallType.NONE));
     
     // Procedural walls based on level
     const wallDensity = 0.1 + Math.min(0.2, lvl * 0.02);
     const permRatio = 0.3 + Math.max(0, 0.4 - lvl * 0.05); // More perm walls in early levels
 
-    for(let r=0; r<GRID_SIZE; r++) {
-        for(let c=0; c<GRID_SIZE; c++) {
+    for(let r=0; r<s.gridSize; r++) {
+        for(let c=0; c<s.gridSize; c++) {
             if (Math.random() < wallDensity) {
                 s.grid[r][c] = Math.random() < permRatio ? WallType.PERMANENT : WallType.DESTRUCTIBLE;
             }
@@ -77,8 +77,8 @@ export function initLevel(lvl: number) {
     }
 
     // Spawn Player
-    s.player.r = GRID_SIZE - 2;
-    s.player.c = Math.floor(GRID_SIZE / 2);
+    s.player.r = s.gridSize - 2;
+    s.player.c = Math.floor(s.gridSize / 2);
     s.player.dir = Direction.UP;
     s.player.visualR = s.player.r;
     s.player.visualC = s.player.c;
@@ -110,15 +110,15 @@ export function spawnBot() {
         
         if (edge === 0) { // Top
             r = 0;
-            c = Math.floor(Math.random() * GRID_SIZE);
+            c = Math.floor(Math.random() * s.gridSize);
         } else if (edge === 1) { // Right
-            r = Math.floor(Math.random() * GRID_SIZE);
-            c = GRID_SIZE - 1;
+            r = Math.floor(Math.random() * s.gridSize);
+            c = s.gridSize - 1;
         } else if (edge === 2) { // Bottom
-            r = GRID_SIZE - 1;
-            c = Math.floor(Math.random() * GRID_SIZE);
+            r = s.gridSize - 1;
+            c = Math.floor(Math.random() * s.gridSize);
         } else { // Left
-            r = Math.floor(Math.random() * GRID_SIZE);
+            r = Math.floor(Math.random() * s.gridSize);
             c = 0;
         }
         
@@ -137,10 +137,10 @@ export function spawnBot() {
                     visualR = -1;
                 } else if (edge === 1) { // Right
                     dir = Direction.LEFT;
-                    visualC = GRID_SIZE;
+                    visualC = s.gridSize;
                 } else if (edge === 2) { // Bottom
                     dir = Direction.UP;
-                    visualR = GRID_SIZE;
+                    visualR = s.gridSize;
                 } else if (edge === 3) { // Left
                     dir = Direction.RIGHT;
                     visualC = -1;
@@ -165,8 +165,8 @@ export function spawnHeart() {
 
     let attempts = 0;
     while (attempts < 50) {
-        const r = Math.floor(Math.random() * GRID_SIZE);
-        const c = Math.floor(Math.random() * GRID_SIZE);
+        const r = Math.floor(Math.random() * s.gridSize);
+        const c = Math.floor(Math.random() * s.gridSize);
 
         if (s.grid[r][c] === WallType.NONE) {
             const hasTank = s.bots.find(b => b.alive && b.r === r && b.c === c) || (s.player.r === r && s.player.c === c);
@@ -189,8 +189,8 @@ export function spawnBomb() {
 
     let attempts = 0;
     while (attempts < 50) {
-        const r = Math.floor(Math.random() * GRID_SIZE);
-        const c = Math.floor(Math.random() * GRID_SIZE);
+        const r = Math.floor(Math.random() * s.gridSize);
+        const c = Math.floor(Math.random() * s.gridSize);
 
         if (s.grid[r][c] === WallType.NONE) {
             const hasTank = s.bots.find(b => b.alive && b.r === r && b.c === c) || (s.player.r === r && s.player.c === c);
@@ -220,7 +220,7 @@ export function explodeBomb(r: number, c: number) {
             const nr = r + dr;
             const nc = c + dc;
 
-            if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+            if (nr >= 0 && nr < s.gridSize && nc >= 0 && nc < s.gridSize) {
                 // Destroy walls (even permanent)
                 s.grid[nr][nc] = WallType.NONE;
                 spawnExplosion(nr, nc, '#ef4444'); // Red explosion
@@ -237,8 +237,8 @@ export function explodeBomb(r: number, c: number) {
                     } else {
                         setTimeout(() => {
                             s.player.alive = true;
-                            s.player.r = GRID_SIZE - 2;
-                            s.player.c = Math.floor(GRID_SIZE / 2);
+                            s.player.r = s.gridSize - 2;
+                            s.player.c = Math.floor(s.gridSize / 2);
                         }, 1000);
                     }
                 }
@@ -326,7 +326,7 @@ export function tryMove(tank: Tank, dir: Direction) {
     const nr = tank.r + vec.r;
     const nc = tank.c + vec.c;
 
-    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && s.grid[nr][nc] === WallType.NONE) {
+    if (nr >= 0 && nr < s.gridSize && nc >= 0 && nc < s.gridSize && s.grid[nr][nc] === WallType.NONE) {
         // Check bots collision
         const otherTank = s.bots.find(b => b.alive && b.r === nr && b.c === nc) || 
                          (tank.type === 'bot' && s.player.alive && s.player.r === nr && s.player.c === nc ? s.player : null);
@@ -377,6 +377,22 @@ function updateBullets(ts: number) {
         const gr = Math.round(b.visualY);
         const gc = Math.round(b.visualX);
 
+        // Hit another bullet (cancel each other)
+        for (let j = 0; j < s.bullets.length; j++) {
+            const b2 = s.bullets[j];
+            if (i !== j && b2.active && b.owner !== b2.owner) {
+                const dist = Math.hypot(b.visualX - b2.visualX, b.visualY - b2.visualY);
+                if (dist < 0.5) {
+                    b.active = false;
+                    b2.active = false;
+                    spawnExplosion(b.visualY, b.visualX, '#ffffff');
+                    break;
+                }
+            }
+        }
+
+        if (!b.active) continue;
+
         // Hit Item (Bomb)
         const item = s.items.find(it => it.alive && it.r === gr && it.c === gc);
         if (item && item.type === 'bomb') {
@@ -387,7 +403,7 @@ function updateBullets(ts: number) {
         }
 
         // Out of bounds
-        if (gr < 0 || gr >= GRID_SIZE || gc < 0 || gc >= GRID_SIZE) {
+        if (gr < 0 || gr >= s.gridSize || gc < 0 || gc >= s.gridSize) {
             b.active = false;
             continue;
         }
@@ -418,8 +434,8 @@ function updateBullets(ts: number) {
             } else {
                 setTimeout(() => {
                     s.player.alive = true;
-                    s.player.r = GRID_SIZE - 2;
-                    s.player.c = Math.floor(GRID_SIZE / 2);
+                    s.player.r = s.gridSize - 2;
+                    s.player.c = Math.floor(s.gridSize / 2);
                 }, 1000);
             }
             updateHUD();
@@ -516,7 +532,7 @@ function updateBots(ts: number) {
                     const vec = DIR_VECTORS[dir];
                     const nr = bot.r + vec.r;
                     const nc = bot.c + vec.c;
-                    if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) return WallType.PERMANENT;
+                    if (nr < 0 || nr >= s.gridSize || nc < 0 || nc >= s.gridSize) return WallType.PERMANENT;
                     
                     // Check other tanks as "permanent" obstacles for movement planning
                     const otherTank = s.bots.find(b => b.alive && b !== bot && b.r === nr && b.c === nc) || 

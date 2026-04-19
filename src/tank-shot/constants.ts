@@ -1,4 +1,3 @@
-export const GRID_SIZE = 13;
 export const REVEAL_DUR = 3000;
 
 export enum Direction {

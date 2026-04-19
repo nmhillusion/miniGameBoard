@@ -65,6 +65,7 @@ export interface GameState {
     botsDestroyedCount: number;
     shakeTimer: number;
     shakeIntensity: number;
+    gridSize: number;
     animFrame: number | null;
 }
 
@@ -72,7 +73,7 @@ export const state: Partial<GameState> & { state: GameState | null } = {
     state: null
 };
 
-export function initState(W: number, H: number): GameState {
+export function initState(W: number, H: number, gridSize: number): GameState {
     return {
         level: 1,
         score: 0,
@@ -100,6 +101,7 @@ export function initState(W: number, H: number): GameState {
         botsDestroyedCount: 0,
         shakeTimer: 0,
         shakeIntensity: 0,
+        gridSize,
         animFrame: null
     };
 }

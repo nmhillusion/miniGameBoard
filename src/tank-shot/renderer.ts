@@ -1,5 +1,5 @@
 import { state as gameContainer } from './state.js';
-import { TANK_COLORS, WallType, GRID_SIZE, Direction } from './constants.js';
+import { TANK_COLORS, WallType, Direction } from './constants.js';
 import { tick } from './game.js';
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -17,30 +17,116 @@ function drawTank(r: number, c: number, dir: Direction, color: string, isPlayer:
     const y = s.offsetTop + r * s.cell;
     const centerX = x + s.cell / 2;
     const centerY = y + s.cell / 2;
-    const size = s.cell * 0.8;
+    const size = s.cell * 0.75;
 
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate((dir * 90) * Math.PI / 180);
 
-    // Body
-    ctx.fillStyle = color;
-    ctx.fillRect(-size/2, -size/2, size, size);
-    
-    // Tracks
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(-size/2 - 2, -size/2, 4, size);
-    ctx.fillRect(size/2 - 2, -size/2, 4, size);
+    // 1. Shadows
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
 
-    // Turret
-    ctx.fillStyle = isPlayer ? '#7dd3fc' : '#fda4af';
-    ctx.fillRect(-size/4, -size/4, size/2, size/2);
+    // 2. Tracks (Left & Right)
+    const trackW = size * 0.2;
+    const trackH = size;
+    ctx.fillStyle = '#1e293b';
     
-    // Barrel
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillRect(-2, -size/2 - 5, 4, size/2);
+    // Draw segmented tracks
+    const drawTrack = (tx: number) => {
+        ctx.beginPath();
+        ctx.roundRect(tx - trackW/2, -trackH/2, trackW, trackH, 3);
+        ctx.fill();
+        // Track segments
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        for (let i = -trackH/2 + 4; i < trackH/2; i += 6) {
+            ctx.beginPath();
+            ctx.moveTo(tx - trackW/2, i);
+            ctx.lineTo(tx + trackW/2, i);
+            ctx.stroke();
+        }
+    };
+    drawTrack(-size/2);
+    drawTrack(size/2);
+
+    ctx.shadowBlur = 0; // Reset shadow for main body
+
+    // 3. Main Body (Chassis)
+    const chassisSize = size * 0.8;
+    const bodyGrad = ctx.createLinearGradient(-chassisSize/2, -chassisSize/2, chassisSize/2, chassisSize/2);
+    bodyGrad.addColorStop(0, color);
+    bodyGrad.addColorStop(1, adjustColor(color, -40)); // Darker version
+    
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.roundRect(-chassisSize/2, -chassisSize/2, chassisSize, chassisSize, 4);
+    ctx.fill();
+    
+    // Chassis detail lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-chassisSize/4, -chassisSize/3, chassisSize/2, chassisSize/1.5);
+
+    // 4. Barrel
+    const barrelW = Math.max(4, size * 0.15);
+    const barrelL = size * 0.7;
+    const barrelGrad = ctx.createLinearGradient(-barrelW/2, 0, barrelW/2, 0);
+    barrelGrad.addColorStop(0, '#94a3b8');
+    barrelGrad.addColorStop(0.5, '#cbd5e1');
+    barrelGrad.addColorStop(1, '#64748b');
+    
+    ctx.fillStyle = barrelGrad;
+    ctx.beginPath();
+    ctx.roundRect(-barrelW/2, -size/2 - (barrelL * 0.3), barrelW, barrelL, 2);
+    ctx.fill();
+    
+    // Muzzle Brake
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(-barrelW/2 - 1, -size/2 - (barrelL * 0.35), barrelW + 2, 4);
+
+    // 5. Turret
+    const turretSize = size * 0.5;
+    const turretGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, turretSize/2);
+    turretGrad.addColorStop(0, isPlayer ? '#7dd3fc' : '#fda4af');
+    turretGrad.addColorStop(1, isPlayer ? '#0284c7' : '#e11d48');
+    
+    ctx.fillStyle = turretGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, turretSize/2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Hatch / Glow
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, turretSize/6, 0, Math.PI * 2);
+    ctx.fill();
+    if (isPlayer) {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#38bdf8';
+        ctx.stroke();
+    }
 
     ctx.restore();
+}
+
+// Helper for modern colors
+function adjustColor(hex: string, amt: number): string {
+    let usePound = false;
+    if (hex[0] === "#") { hex = hex.slice(1); usePound = true; }
+    let num = parseInt(hex, 16);
+    let r = (num >> 16) + amt;
+    if (r > 255) r = 255; else if (r < 0) r = 0;
+    let b = ((num >> 8) & 0x00FF) + amt;
+    if (b > 255) b = 255; else if (b < 0) b = 0;
+    let g = (num & 0x0000FF) + amt;
+    if (g > 255) g = 255; else if (g < 0) g = 0;
+    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
 }
 
 function drawWall(r: number, c: number, type: WallType) {
@@ -48,22 +134,27 @@ function drawWall(r: number, c: number, type: WallType) {
     const s = gameContainer.state;
     if (!s) return;
 
-    const x = s.offsetLeft + c * s.cell;
-    const y = s.offsetTop + r * s.cell;
+    const x = Math.floor(s.offsetLeft + c * s.cell);
+    const y = Math.floor(s.offsetTop + r * s.cell);
+    const cellSize = s.cell;
 
     if (type === WallType.PERMANENT) {
-        ctx.fillStyle = '#059669'; // Emerald
-        ctx.fillRect(x + 2, y + 2, s.cell - 4, s.cell - 4);
+        ctx.fillStyle = '#065f46'; // Darker Emerald
+        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+        
         ctx.strokeStyle = '#10b981';
-        ctx.strokeRect(x + 5, y + 5, s.cell - 10, s.cell - 10);
+        ctx.lineWidth = Math.max(1, cellSize * 0.05);
+        ctx.strokeRect(x + 4, y + 4, cellSize - 8, cellSize - 8);
     } else if (type === WallType.DESTRUCTIBLE) {
-        ctx.fillStyle = '#78350f'; // Amber/Brown
-        ctx.fillRect(x + 2, y + 2, s.cell - 4, s.cell - 4);
+        ctx.fillStyle = '#78350f'; // Brown
+        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+        
         // Brick pattern
         ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(x + 2, y + s.cell/2); ctx.lineTo(x + s.cell - 2, y + s.cell/2);
-        ctx.moveTo(x + s.cell/2, y + 2); ctx.lineTo(x + s.cell/2, y + s.cell/2);
+        ctx.moveTo(x + 1, y + cellSize/2); ctx.lineTo(x + cellSize - 1, y + cellSize/2);
+        ctx.moveTo(x + cellSize/2, y + 1); ctx.lineTo(x + cellSize/2, y + cellSize/2);
         ctx.stroke();
     }
 }
@@ -88,22 +179,27 @@ export function render(ts: number) {
     ctx.translate(sx, sy);
 
     // Draw Grid / Floor
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= GRID_SIZE; i++) {
+    for (let i = 0; i <= s.gridSize; i++) {
+        // Horizontal lines
         ctx.beginPath();
-        ctx.moveTo(s.offsetLeft + i * s.cell, s.offsetTop);
-        ctx.lineTo(s.offsetLeft + i * s.cell, s.offsetTop + GRID_SIZE * s.cell);
+        const y = Math.floor(s.offsetTop + i * s.cell) + 0.5; // +0.5 for crisp 1px lines
+        ctx.moveTo(s.offsetLeft, y);
+        ctx.lineTo(s.offsetLeft + s.gridSize * s.cell, y);
         ctx.stroke();
+
+        // Vertical lines
         ctx.beginPath();
-        ctx.moveTo(s.offsetLeft, s.offsetTop + i * s.cell);
-        ctx.lineTo(s.offsetLeft + GRID_SIZE * s.cell, s.offsetTop + i * s.cell);
+        const x = Math.floor(s.offsetLeft + i * s.cell) + 0.5;
+        ctx.moveTo(x, s.offsetTop);
+        ctx.lineTo(x, s.offsetTop + s.gridSize * s.cell);
         ctx.stroke();
     }
 
     // Draw Walls
-    for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
+    for (let r = 0; r < s.gridSize; r++) {
+        for (let c = 0; c < s.gridSize; c++) {
             if (s.grid[r][c] !== WallType.NONE) {
                 drawWall(r, c, s.grid[r][c]);
             }
@@ -128,9 +224,10 @@ export function render(ts: number) {
 
     // Draw Bullets
     ctx.fillStyle = '#fbbf24';
+    const bulletSize = Math.max(3, s.cell * 0.1);
     for (const b of s.bullets) {
         ctx.beginPath();
-        ctx.arc(s.offsetLeft + (b.visualX + 0.5) * s.cell, s.offsetTop + (b.visualY + 0.5) * s.cell, 4, 0, Math.PI * 2);
+        ctx.arc(s.offsetLeft + (b.visualX + 0.5) * s.cell, s.offsetTop + (b.visualY + 0.5) * s.cell, bulletSize, 0, Math.PI * 2);
         ctx.fill();
     }
 
