@@ -8,6 +8,24 @@ export function setContext(c: CanvasRenderingContext2D | null) {
     ctx = c;
 }
 
+function roundRect(x: number, y: number, w: number, h: number, r: number) {
+    if (!ctx) return;
+    if (typeof (ctx as any).roundRect === 'function') {
+        (ctx as any).roundRect(x, y, w, h, r);
+    } else {
+        // Fallback for older browsers
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+}
+
 function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
     if (!ctx) return;
     const s = gameContainer.state;
@@ -43,6 +61,7 @@ function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
     const moveOffset = isMoving ? (ts * 0.15) % segmentGap : 0;
 
     const drawTrack = (tx: number) => {
+        if (!ctx) return;
         // Track Base (Metallic Silver/Gray)
         const trackGrad = ctx.createLinearGradient(tx - trackW/2, 0, tx + trackW/2, 0);
         trackGrad.addColorStop(0, '#334155');
@@ -51,7 +70,7 @@ function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
         
         ctx.fillStyle = trackGrad;
         ctx.beginPath();
-        ctx.roundRect(tx - trackW/2, -trackH/2, trackW, trackH, 4);
+        roundRect(tx - trackW/2, -trackH/2, trackW, trackH, 4);
         ctx.fill();
 
         // Track segments (Animated - much brighter)
@@ -80,7 +99,7 @@ function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
     
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.roundRect(-chassisSize/2, -chassisSize/2, chassisSize, chassisSize, 4);
+    roundRect(-chassisSize/2, -chassisSize/2, chassisSize, chassisSize, 4);
     ctx.fill();
     
     // Chassis detail lines
@@ -98,7 +117,7 @@ function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
     
     ctx.fillStyle = barrelGrad;
     ctx.beginPath();
-    ctx.roundRect(-barrelW/2, -size/2 - (barrelL * 0.3), barrelW, barrelL, 2);
+    roundRect(-barrelW/2, -size/2 - (barrelL * 0.3), barrelW, barrelL, 2);
     ctx.fill();
     
     // Muzzle Brake
@@ -150,11 +169,11 @@ function adjustColor(hex: string, amt: number): string {
     let num = parseInt(hex, 16);
     let r = (num >> 16) + amt;
     if (r > 255) r = 255; else if (r < 0) r = 0;
-    let b = ((num >> 8) & 0x00FF) + amt;
-    if (b > 255) b = 255; else if (b < 0) b = 0;
-    let g = (num & 0x0000FF) + amt;
+    let g = ((num >> 8) & 0x00FF) + amt;
     if (g > 255) g = 255; else if (g < 0) g = 0;
-    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+    let b = (num & 0x0000FF) + amt;
+    if (b > 255) b = 255; else if (b < 0) b = 0;
+    return (usePound ? "#" : "") + (b | (g << 8) | (r << 16)).toString(16).padStart(6, '0');
 }
 
 function drawWall(r: number, c: number, type: WallType) {
@@ -184,14 +203,15 @@ function drawWall(r: number, c: number, type: WallType) {
         ctx.fillStyle = '#cbd5e1';
         const rSize = Math.max(2, cs * 0.08);
         const pad = cs * 0.15;
-        [
+        const rivetPositions = [
             [pad, pad], [cs - pad, pad],
             [pad, cs - pad], [cs - pad, cs - pad]
-        ].forEach(([px, py]) => {
+        ];
+        for (const [px, py] of rivetPositions) {
             ctx.beginPath();
             ctx.arc(x + px, y + py, rSize/2, 0, Math.PI * 2);
             ctx.fill();
-        });
+        }
 
         // "X" brace detail
         ctx.strokeStyle = 'rgba(255,255,255,0.05)';

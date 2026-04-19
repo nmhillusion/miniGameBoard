@@ -84,6 +84,7 @@ export function initState(W: number, H: number, gridSize: number): GameState {
         lives: 3,
         grid: [],
         player: {
+            r: 0, c: 0, dir: Direction.UP, visualR: 0, visualC: 0,
             lastAction: 0, alive: true, type: 'player',
             powerType: 'none', powerTimer: 0
         },

@@ -185,9 +185,6 @@ export function spawnHeart() {
     }
 }
 
-    }
-}
-
 export function spawnBomb() {
     const s = gameContainer.state;
     if (!s) return;
