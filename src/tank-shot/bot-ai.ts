@@ -1,26 +1,44 @@
-import { state as gameContainer, Tank } from './state.js';
+import { state as gameContainer, Tank, Item } from './state.js';
 import { Direction, DIR_VECTORS, WallType } from './constants.js';
 import { tryMove, shoot } from './game.js';
 
-function canSeePlayer(bot: Tank, player: Tank, grid: WallType[][]): boolean {
-    if (!player.alive) return false;
-    if (bot.r === player.r) {
-        const start = Math.min(bot.c, player.c);
-        const end = Math.max(bot.c, player.c);
+function canSeeTarget(bot: Tank, tr: number, tc: number, grid: WallType[][], ignoreDestructible: boolean = false): boolean {
+    if (bot.r === tr) {
+        const start = Math.min(bot.c, tc);
+        const end = Math.max(bot.c, tc);
         for (let c = start + 1; c < end; c++) {
-            if (grid[bot.r][c] !== WallType.NONE) return false;
+            const wall = grid[bot.r][c];
+            if (wall === WallType.PERMANENT) return false;
+            if (!ignoreDestructible && wall === WallType.DESTRUCTIBLE) return false;
         }
         return true;
     }
-    if (bot.c === player.c) {
-        const start = Math.min(bot.r, player.r);
-        const end = Math.max(bot.r, player.r);
+    if (bot.c === tc) {
+        const start = Math.min(bot.r, tr);
+        const end = Math.max(bot.r, tr);
         for (let r = start + 1; r < end; r++) {
-            if (grid[r][bot.c] !== WallType.NONE) return false;
+            const wall = grid[r][bot.c];
+            if (wall === WallType.PERMANENT) return false;
+            if (!ignoreDestructible && wall === WallType.DESTRUCTIBLE) return false;
         }
         return true;
     }
     return false;
+}
+
+function getMoveDir(bot: Tank, tr: number, tc: number): { primary: Direction, secondary: Direction | null } {
+    const dr = tr - bot.r;
+    const dc = tc - bot.c;
+
+    const primary = Math.abs(dr) > Math.abs(dc) 
+        ? (dr > 0 ? Direction.DOWN : Direction.UP)
+        : (dc > 0 ? Direction.RIGHT : Direction.LEFT);
+    
+    const secondary = Math.abs(dr) > Math.abs(dc)
+        ? (dc !== 0 ? (dc > 0 ? Direction.RIGHT : Direction.LEFT) : null)
+        : (dr !== 0 ? (dr > 0 ? Direction.DOWN : Direction.UP) : null);
+
+    return { primary, secondary };
 }
 
 export function updateBots(ts: number) {
@@ -30,36 +48,71 @@ export function updateBots(ts: number) {
     for (const bot of s.bots) {
         if (!bot.alive) continue;
 
-        const dist = Math.hypot(bot.r - s.player.r, bot.c - s.player.c);
         const now = ts;
+        
+        // Class-specific action delays
+        let actionDelay = 600; 
+        if (bot.botClass === 'scout') actionDelay = 400;
+        else if (bot.botClass === 'heavy') actionDelay = 800;
+        
+        if (bot.powerType !== 'none') actionDelay *= 0.7;
 
-        if (now - bot.lastAction > 1000) {
-            const hasLOS = canSeePlayer(bot, s.player, s.grid);
+        if (now - bot.lastAction > actionDelay) {
+            const distToPlayer = Math.hypot(bot.r - s.player.r, bot.c - s.player.c);
+            
+            // 1. Target Selection based on Class
+            let targetR = s.player.r;
+            let targetC = s.player.c;
+            let isTargetingPlayer = true;
 
-            if (hasLOS) {
-                // ATTACK MODE: Seen in straight line
-                if (bot.r === s.player.r) {
-                    const dir = s.player.c > bot.c ? Direction.RIGHT : Direction.LEFT;
+            // Scouts and Tacticians look for items
+            if (bot.botClass !== 'heavy') {
+                const searchDist = bot.botClass === 'scout' ? 12 : 8;
+                const nearbyItem = s.items
+                    .filter(i => i.alive && (i.type === 'heart' || i.type === 'powerup'))
+                    .map(i => ({ item: i, dist: Math.hypot(bot.r - i.r, bot.c - i.c) }))
+                    .filter(d => d.dist < searchDist)
+                    .sort((a, b) => a.dist - b.dist)[0]?.item;
+
+                if (nearbyItem) {
+                    targetR = nearbyItem.r;
+                    targetC = nearbyItem.c;
+                    isTargetingPlayer = false;
+                }
+            }
+
+            // Tacticians prioritize bombs
+            if (bot.botClass === 'tactician' || (bot.botClass === 'scout' && Math.random() < 0.3)) {
+                const nearbyBomb = s.items
+                    .find(i => i.alive && i.type === 'bomb' && 
+                               Math.hypot(i.r - s.player.r, i.c - s.player.c) <= 1.8 && 
+                               Math.hypot(i.r - bot.r, i.c - bot.c) > 2);
+
+                if (nearbyBomb && canSeeTarget(bot, nearbyBomb.r, nearbyBomb.c, s.grid)) {
+                    targetR = nearbyBomb.r;
+                    targetC = nearbyBomb.c;
+                    isTargetingPlayer = false;
+                }
+            }
+
+            const hasLOS = canSeeTarget(bot, targetR, targetC, s.grid);
+            const hasLOSThroughWalls = (bot.powerType === 'penetrating' || bot.botClass === 'heavy') && 
+                                       canSeeTarget(bot, targetR, targetC, s.grid, true);
+
+            if (hasLOS || (hasLOSThroughWalls && isTargetingPlayer)) {
+                // ATTACK/TRIGGER MODE
+                if (bot.r === targetR) {
+                    const dir = targetC > bot.c ? Direction.RIGHT : Direction.LEFT;
                     if (bot.dir !== dir) bot.dir = dir;
                     else shoot(bot);
-                } else if (bot.c === s.player.c) {
-                    const dir = s.player.r > bot.r ? Direction.DOWN : Direction.UP;
+                } else if (bot.c === targetC) {
+                    const dir = targetR > bot.r ? Direction.DOWN : Direction.UP;
                     if (bot.dir !== dir) bot.dir = dir;
                     else shoot(bot);
                 }
-            } else if (dist <= 5) {
-                // HUNT MODE: Near but not in LOS
-                // Determine primary and secondary directions to move towards player
-                const dr = s.player.r - bot.r;
-                const dc = s.player.c - bot.c;
-
-                const primaryDir = Math.abs(dr) > Math.abs(dc) 
-                    ? (dr > 0 ? Direction.DOWN : Direction.UP)
-                    : (dc > 0 ? Direction.RIGHT : Direction.LEFT);
-                
-                const secondaryDir = Math.abs(dr) > Math.abs(dc)
-                    ? (dc !== 0 ? (dc > 0 ? Direction.RIGHT : Direction.LEFT) : null)
-                    : (dr !== 0 ? (dr > 0 ? Direction.DOWN : Direction.UP) : null);
+            } else {
+                // HUNT/MOVE MODE
+                const { primary, secondary } = getMoveDir(bot, targetR, targetC);
 
                 const checkBlocked = (dir: Direction) => {
                     const vec = DIR_VECTORS[dir];
@@ -67,7 +120,6 @@ export function updateBots(ts: number) {
                     const nc = bot.c + vec.c;
                     if (nr < 0 || nr >= s.gridSize || nc < 0 || nc >= s.gridSize) return WallType.PERMANENT;
                     
-                    // Check other tanks as "permanent" obstacles for movement planning
                     const otherTank = s.bots.find(b => b.alive && b !== bot && b.r === nr && b.c === nc) || 
                                      (s.player.alive && s.player.r === nr && s.player.c === nc ? s.player : null);
                     if (otherTank) return WallType.PERMANENT;
@@ -75,37 +127,40 @@ export function updateBots(ts: number) {
                     return s.grid[nr][nc];
                 };
 
-                const blockPrimary = checkBlocked(primaryDir);
-                if (blockPrimary === WallType.NONE) {
-                    tryMove(bot, primaryDir);
-                } else if (blockPrimary === WallType.DESTRUCTIBLE) {
-                    if (bot.dir !== primaryDir) bot.dir = primaryDir;
-                    else shoot(bot);
-                } else if (secondaryDir !== null) {
-                    const blockSecondary = checkBlocked(secondaryDir);
-                    if (blockSecondary === WallType.NONE) {
-                        tryMove(bot, secondaryDir);
-                    } else if (blockSecondary === WallType.DESTRUCTIBLE) {
-                        if (bot.dir !== secondaryDir) bot.dir = secondaryDir;
-                        else shoot(bot);
-                    } else {
-                        // All tactical routes blocked, move randomly
-                        tryMove(bot, Math.floor(Math.random() * 4));
+                const tryTacticalMove = (dir: Direction) => {
+                    const block = checkBlocked(dir);
+                    if (block === WallType.NONE) {
+                        tryMove(bot, dir);
+                        return true;
+                    } else if (block === WallType.DESTRUCTIBLE) {
+                        // Heavies always blast through destructibles
+                        if (bot.botClass === 'heavy' || Math.random() < 0.6) {
+                            if (bot.dir !== dir) bot.dir = dir;
+                            else shoot(bot);
+                            return true;
+                        }
                     }
-                }
-            } else {
-                // PATROL MODE: Search blindly
-                const rand = Math.random();
-                if (rand < 0.1) {
-                    // Turn to a random direction
-                    bot.dir = Math.floor(Math.random() * 4);
+                    return false;
+                };
+
+                // Movement Logic: Scouts prefer secondary paths if primary is blocked (avoiding direct fire)
+                if (bot.botClass === 'scout' && secondary !== null && Math.random() < 0.4) {
+                    if (!tryTacticalMove(secondary)) tryTacticalMove(primary);
                 } else {
-                    // Try to move in current direction or random direction
-                    const moveDir = rand < 0.6 ? bot.dir : Math.floor(Math.random() * 4);
-                    tryMove(bot, moveDir);
+                    if (!tryTacticalMove(primary)) {
+                        if (secondary === null || !tryTacticalMove(secondary)) {
+                            // Stuck or no clear tactical move
+                            if (bot.botClass === 'heavy' || Math.random() < 0.3) {
+                                shoot(bot);
+                            } else {
+                                tryMove(bot, Math.floor(Math.random() * 4));
+                            }
+                        }
+                    }
                 }
             }
             bot.lastAction = now;
         }
     }
 }
+

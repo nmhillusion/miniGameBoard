@@ -316,7 +316,13 @@ export function render(ts: number) {
         if (bot.alive) {
             bot.visualR += (bot.r - bot.visualR) * lerpSpeed;
             bot.visualC += (bot.c - bot.visualC) * lerpSpeed;
-            drawTank(bot, ts, TANK_COLORS.BOT, false);
+            
+            let color = TANK_COLORS.BOT;
+            if (bot.botClass === 'scout') color = TANK_COLORS.BOT_SCOUT;
+            else if (bot.botClass === 'heavy') color = TANK_COLORS.BOT_HEAVY;
+            else if (bot.botClass === 'tactician') color = TANK_COLORS.BOT_TACTICIAN;
+            
+            drawTank(bot, ts, color, false);
         }
     }
 

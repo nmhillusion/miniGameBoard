@@ -42,6 +42,7 @@ export interface Tank {
     type: 'player' | 'bot';
     powerType: 'none' | 'penetrating';
     powerTimer: number;
+    botClass?: 'scout' | 'heavy' | 'tactician';
 }
 
 export interface GameState {

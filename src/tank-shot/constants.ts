@@ -22,7 +22,10 @@ export enum WallType {
 
 export const TANK_COLORS = {
     PLAYER: '#38bdf8',
-    BOT: '#ff6060'
+    BOT: '#ff6060',
+    BOT_SCOUT: '#4ade80',
+    BOT_HEAVY: '#a855f7',
+    BOT_TACTICIAN: '#fb923c'
 };
 
 export const SHAKE_DUR = 500;

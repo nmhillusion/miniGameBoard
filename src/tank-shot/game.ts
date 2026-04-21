@@ -149,11 +149,15 @@ export function spawnBot() {
                     visualC = -1;
                 }
 
+                const classes: ('scout' | 'heavy' | 'tactician')[] = ['scout', 'heavy', 'tactician'];
+                const botClass = classes[Math.floor(Math.random() * classes.length)];
+
                 s.bots.push({
                     r, c, dir, visualR, visualC,
                     lastAction: performance.now(), // Delay first action to let entry animation play
                     alive: true, type: 'bot',
-                    powerType: 'none', powerTimer: 0
+                    powerType: 'none', powerTimer: 0,
+                    botClass
                 });
                 s.botsSpawnedCount++;
                 return;
