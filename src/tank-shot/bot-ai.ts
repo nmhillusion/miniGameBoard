@@ -107,16 +107,26 @@ export function updateBots(ts: number) {
             const canSenseThroughWalls = distToPlayer < 10 || bot.botClass === 'heavy' || bot.powerType === 'penetrating';
             const hasLOSThroughWalls = canSenseThroughWalls && canSeeTarget(bot, targetR, targetC, s.grid, true);
 
+            let acted = false;
+
             if (hasLOS || (hasLOSThroughWalls && isTargetingPlayer)) {
                 // ATTACK/TRIGGER MODE
                 if (bot.r === targetR) {
                     const dir = targetC > bot.c ? Direction.RIGHT : Direction.LEFT;
-                    if (bot.dir !== dir) bot.dir = dir;
-                    else shoot(bot);
+                    if (bot.dir !== dir) {
+                        bot.dir = dir;
+                    } else {
+                        shoot(bot);
+                    }
+                    acted = true;
                 } else if (bot.c === targetC) {
                     const dir = targetR > bot.r ? Direction.DOWN : Direction.UP;
-                    if (bot.dir !== dir) bot.dir = dir;
-                    else shoot(bot);
+                    if (bot.dir !== dir) {
+                        bot.dir = dir;
+                    } else {
+                        shoot(bot);
+                    }
+                    acted = true;
                 }
             } else {
                 // HUNT/MOVE MODE
@@ -145,7 +155,7 @@ export function updateBots(ts: number) {
                             const fc = bot.c + vec.c;
                             if (fr >= 0 && fr < s.gridSize && fc >= 0 && fc < s.gridSize && s.grid[fr][fc] === WallType.DESTRUCTIBLE) {
                                 shoot(bot);
-                                return true;
+                                return true; // Count shooting as an action
                             }
                         }
                         tryMove(bot, dir);
@@ -164,21 +174,24 @@ export function updateBots(ts: number) {
 
                 // Movement Logic: Scouts prefer secondary paths if primary is blocked (avoiding direct fire)
                 if (bot.botClass === 'scout' && secondary !== null && Math.random() < 0.4) {
-                    if (!tryTacticalMove(secondary)) tryTacticalMove(primary);
+                    if (tryTacticalMove(secondary)) acted = true;
+                    else if (tryTacticalMove(primary)) acted = true;
                 } else {
-                    if (!tryTacticalMove(primary)) {
-                        if (secondary === null || !tryTacticalMove(secondary)) {
-                            // Stuck or no clear tactical move
-                            if (bot.botClass === 'heavy' || Math.random() < 0.3) {
-                                shoot(bot);
-                            } else {
-                                tryMove(bot, Math.floor(Math.random() * 4));
-                            }
+                    if (tryTacticalMove(primary)) acted = true;
+                    else if (secondary !== null && tryTacticalMove(secondary)) acted = true;
+                    else {
+                        // Stuck or no clear tactical move
+                        if (bot.botClass === 'heavy' || Math.random() < 0.3) {
+                            shoot(bot);
+                            acted = true;
+                        } else {
+                            tryMove(bot, Math.floor(Math.random() * 4));
+                            acted = true;
                         }
                     }
                 }
             }
-            bot.lastAction = now;
+            if (acted) bot.lastAction = now;
         }
     }
 }

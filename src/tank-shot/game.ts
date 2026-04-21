@@ -205,10 +205,6 @@ export function shoot(tank: Tank) {
         const now = performance.now();
         if (now - tank.lastAction < 100) return;
         tank.lastAction = now;
-    } else {
-        const now = performance.now();
-        if (now - tank.lastAction < 1000) return;
-        tank.lastAction = now;
     }
 
     soundManager.playShoot();
