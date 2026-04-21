@@ -104,8 +104,8 @@ export function updateBots(ts: number) {
             }
 
             const hasLOS = canSeeTarget(bot, targetR, targetC, s.grid);
-            const hasLOSThroughWalls = (bot.powerType === 'penetrating' || bot.botClass === 'heavy') && 
-                                       canSeeTarget(bot, targetR, targetC, s.grid, true);
+            const canSenseThroughWalls = distToPlayer < 10 || bot.botClass === 'heavy' || bot.powerType === 'penetrating';
+            const hasLOSThroughWalls = canSenseThroughWalls && canSeeTarget(bot, targetR, targetC, s.grid, true);
 
             if (hasLOS || (hasLOSThroughWalls && isTargetingPlayer)) {
                 // ATTACK/TRIGGER MODE
@@ -138,11 +138,22 @@ export function updateBots(ts: number) {
                 const tryTacticalMove = (dir: Direction) => {
                     const block = checkBlocked(dir);
                     if (block === WallType.NONE) {
+                        // Proactive shooting: if facing a destructible wall in the distance, maybe shoot it anyway
+                        if (Math.random() < 0.2) {
+                            const vec = DIR_VECTORS[bot.dir];
+                            const fr = bot.r + vec.r;
+                            const fc = bot.c + vec.c;
+                            if (fr >= 0 && fr < s.gridSize && fc >= 0 && fc < s.gridSize && s.grid[fr][fc] === WallType.DESTRUCTIBLE) {
+                                shoot(bot);
+                                return true;
+                            }
+                        }
                         tryMove(bot, dir);
                         return true;
                     } else if (block === WallType.DESTRUCTIBLE) {
-                        // Heavies always blast through destructibles
-                        if (bot.botClass === 'heavy' || Math.random() < 0.6) {
+                        // High chance to blast through
+                        const blastChance = bot.botClass === 'heavy' ? 1.0 : (bot.botClass === 'tactician' ? 0.9 : 0.7);
+                        if (Math.random() < blastChance) {
                             if (bot.dir !== dir) bot.dir = dir;
                             else shoot(bot);
                             return true;
