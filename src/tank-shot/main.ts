@@ -55,10 +55,16 @@ document.getElementById("btn-home")?.addEventListener("click", () => {
     window.location.href = "/index.html";
 });
 
-document.getElementById("btn-mute")?.addEventListener("click", (e) => {
-    const muted = soundManager.toggleMute();
+document.getElementById("btn-mute-music")?.addEventListener("click", (e) => {
+    const muted = soundManager.toggleMusicMute();
     const btn = e.currentTarget as HTMLButtonElement;
-    btn.textContent = muted ? "🔇" : "🔊";
+    btn.style.opacity = muted ? "0.5" : "1";
+});
+
+document.getElementById("btn-mute-sfx")?.addEventListener("click", (e) => {
+    const muted = soundManager.toggleSFXMute();
+    const btn = e.currentTarget as HTMLButtonElement;
+    btn.style.opacity = muted ? "0.5" : "1";
 });
 
 export function handleOverlayAction() {

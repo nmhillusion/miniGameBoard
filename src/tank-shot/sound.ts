@@ -1,7 +1,8 @@
 export class SoundManager {
     private ctx: AudioContext | null = null;
     private masterGain: GainNode | null = null;
-    private isMuted: boolean = false;
+    private isMusicMuted: boolean = false;
+    private isSFXMuted: boolean = false;
     private bgm: HTMLAudioElement | null = null;
 
     constructor() {
@@ -20,17 +21,23 @@ export class SoundManager {
 
     private updateVolume() {
         if (this.masterGain) {
-            this.masterGain.gain.value = this.isMuted ? 0 : 0.6;
+            this.masterGain.gain.value = this.isSFXMuted ? 0 : 0.6;
         }
         if (this.bgm) {
-            this.bgm.muted = this.isMuted;
+            this.bgm.muted = this.isMusicMuted;
         }
     }
 
-    toggleMute(): boolean {
-        this.isMuted = !this.isMuted;
+    toggleMusicMute(): boolean {
+        this.isMusicMuted = !this.isMusicMuted;
         this.updateVolume();
-        return this.isMuted;
+        return this.isMusicMuted;
+    }
+
+    toggleSFXMute(): boolean {
+        this.isSFXMuted = !this.isSFXMuted;
+        this.updateVolume();
+        return this.isSFXMuted;
     }
 
     playBGM() {
@@ -48,7 +55,7 @@ export class SoundManager {
 
     playShoot() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -69,7 +76,7 @@ export class SoundManager {
 
     playExplosion() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const bufferSize = this.ctx.sampleRate * 0.4;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -100,7 +107,7 @@ export class SoundManager {
 
     playLargeExplosion() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         // Multiple noise layers for a bigger boom
         for (let j = 0; j < 3; j++) {
@@ -129,7 +136,7 @@ export class SoundManager {
 
     playKillBot() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -152,7 +159,7 @@ export class SoundManager {
 
     playKillPlayer() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -176,7 +183,7 @@ export class SoundManager {
 
     playCollect() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -198,7 +205,7 @@ export class SoundManager {
 
     playWin() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const now = this.ctx.currentTime;
         const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
@@ -217,7 +224,7 @@ export class SoundManager {
 
     playLose() {
         this.init();
-        if (!this.ctx || !this.masterGain || this.isMuted) return;
+        if (!this.ctx || !this.masterGain || this.isSFXMuted) return;
 
         const now = this.ctx.currentTime;
         const notes = [440, 349.23, 293.66, 261.63];
@@ -234,6 +241,7 @@ export class SoundManager {
             osc.stop(now + i * 0.2 + 0.5);
         });
     }
+
 }
 
 export const soundManager = new SoundManager();
