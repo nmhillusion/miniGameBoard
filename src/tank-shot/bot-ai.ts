@@ -65,18 +65,26 @@ export function updateBots(ts: number) {
             let targetC = s.player.c;
             let isTargetingPlayer = true;
 
-            // Scouts and Tacticians look for items
-            if (bot.botClass !== 'heavy') {
-                const searchDist = bot.botClass === 'scout' ? 12 : 8;
-                const nearbyItem = s.items
-                    .filter(i => i.alive && (i.type === 'heart' || i.type === 'powerup'))
+            // Heart Protection Logic: Bots block hearts if player is nearby
+            const hearts = s.items.filter(i => i.alive && i.type === 'heart');
+            const threatenedHeart = hearts.find(h => Math.hypot(h.r - s.player.r, h.c - s.player.c) < 5);
+
+            if (threatenedHeart && (bot.botClass === 'tactician' || bot.botClass === 'heavy' || Math.random() < 0.4)) {
+                // Move to the heart to block it
+                targetR = threatenedHeart.r;
+                targetC = threatenedHeart.c;
+                isTargetingPlayer = false;
+            } else if (bot.botClass !== 'heavy') {
+                // Scouts and Tacticians look for powerups to collect
+                const nearbyPowerup = s.items
+                    .filter(i => i.alive && i.type === 'powerup')
                     .map(i => ({ item: i, dist: Math.hypot(bot.r - i.r, bot.c - i.c) }))
-                    .filter(d => d.dist < searchDist)
+                    .filter(d => d.dist < (bot.botClass === 'scout' ? 12 : 8))
                     .sort((a, b) => a.dist - b.dist)[0]?.item;
 
-                if (nearbyItem) {
-                    targetR = nearbyItem.r;
-                    targetC = nearbyItem.c;
+                if (nearbyPowerup) {
+                    targetR = nearbyPowerup.r;
+                    targetC = nearbyPowerup.c;
                     isTargetingPlayer = false;
                 }
             }

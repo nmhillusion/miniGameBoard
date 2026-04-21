@@ -179,17 +179,6 @@ export function updateItems(ts: number) {
                 continue;
             }
 
-            // Collection by Bots (Deny to player)
-            for (const bot of s.bots) {
-                if (bot.alive && bot.r === item.r && bot.c === item.c) {
-                    item.alive = false;
-                    soundManager.playCollect();
-                    break;
-                }
-            }
-
-            if (!item.alive) continue;
-
             if (age > DESPAWN_TIME) {
                 item.alive = false;
             }
