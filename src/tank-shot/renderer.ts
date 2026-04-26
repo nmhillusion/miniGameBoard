@@ -159,6 +159,79 @@ function drawTank(tank: any, ts: number, color: string, isPlayer: boolean) {
         ctx.stroke();
     }
 
+    // Guarding Shield (Force Shield Style)
+    if (tank.guardTimer > ts) {
+        ctx.restore(); 
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        
+        const pulse = Math.sin(ts / 250) * 0.1 + 0.9;
+        const shieldRadius = s.cell * 1.2;
+        const glowColor = '#22d3ee'; // Cyan-400
+        
+        // 1. Outer Glow Rim
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 0.8; // Even thinner border
+        ctx.shadowBlur = 10 * pulse;
+        ctx.shadowColor = glowColor;
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, shieldRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 2. Hexagon Grid Clipping
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, shieldRadius, 0, Math.PI * 2);
+        ctx.clip();
+        
+        // Spherical Gradient Fill (Very Transparent)
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, shieldRadius);
+        grad.addColorStop(0, 'rgba(34, 211, 238, 0.01)');
+        grad.addColorStop(0.8, 'rgba(34, 211, 238, 0.04)');
+        grad.addColorStop(1, 'rgba(34, 211, 238, 0.1)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+ 
+        // Draw Hexagon Grid (Very Transparent)
+        const hexSize = 10;
+        const hexW = Math.sqrt(3) * hexSize;
+        const hexH = 2 * hexSize;
+        
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.08)';
+        ctx.lineWidth = 0.4;
+        ctx.beginPath();
+        
+        for (let gy = -shieldRadius - hexH; gy < shieldRadius + hexH; gy += hexH * 0.75) {
+            const row = Math.round(gy / (hexH * 0.75));
+            const xOffset = (row % 2) * (hexW / 2);
+            for (let gx = -shieldRadius - hexW; gx < shieldRadius + hexW; gx += hexW) {
+                const cx = gx + xOffset;
+                const cy = gy;
+                
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i + (Math.PI / 6);
+                    const px = cx + hexSize * Math.cos(angle);
+                    const py = cy + hexSize * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+            }
+        }
+        ctx.stroke();
+        
+        // 3. Shimmer Effect (Very Subtle)
+        const shimmerPos = (ts / 20) % (shieldRadius * 4) - shieldRadius * 2;
+        const shimmerGrad = ctx.createLinearGradient(shimmerPos, -shieldRadius, shimmerPos + 20, shieldRadius);
+        shimmerGrad.addColorStop(0, 'transparent');
+        shimmerGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
+        shimmerGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = shimmerGrad;
+        ctx.fillRect(-shieldRadius, -shieldRadius, shieldRadius * 2, shieldRadius * 2);
+
+        ctx.restore(); // End clipping
+    }
+
     ctx.restore();
 }
 

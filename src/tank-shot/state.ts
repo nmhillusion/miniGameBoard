@@ -42,6 +42,7 @@ export interface Tank {
     type: 'player' | 'bot';
     powerType: 'none' | 'penetrating';
     powerTimer: number;
+    guardTimer: number;
     botClass?: 'scout' | 'heavy' | 'tactician';
 }
 
@@ -87,7 +88,7 @@ export function initState(W: number, H: number, gridSize: number): GameState {
         player: {
             r: 0, c: 0, dir: Direction.UP, visualR: 0, visualC: 0,
             lastAction: 0, alive: true, type: 'player',
-            powerType: 'none', powerTimer: 0
+            powerType: 'none', powerTimer: 0, guardTimer: 0
         },
         bots: [],
         bullets: [],

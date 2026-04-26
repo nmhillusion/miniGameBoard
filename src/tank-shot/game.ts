@@ -86,6 +86,7 @@ export function initLevel(lvl: number) {
     s.player.visualR = s.player.r;
     s.player.visualC = s.player.c;
     s.player.alive = true;
+    s.player.guardTimer = performance.now() + 5000;
     s.grid[s.player.r][s.player.c] = WallType.NONE;
 
     // Spawn Bots
@@ -157,6 +158,7 @@ export function spawnBot() {
                     lastAction: performance.now(), // Delay first action to let entry animation play
                     alive: true, type: 'bot',
                     powerType: 'none', powerTimer: 0,
+                    guardTimer: 0,
                     botClass
                 });
                 s.botsSpawnedCount++;
@@ -282,22 +284,28 @@ function updateBullets(ts: number) {
 
         // Hit Tank
         if (b.owner === 'bot' && s.player.alive && Math.hypot(b.visualX - s.player.c, b.visualY - s.player.r) < 0.4) {
-            s.player.alive = false;
-            b.active = false;
-            s.lives--;
-            soundManager.playKillPlayer();
-            spawnExplosion(s.player.r, s.player.c, TANK_COLORS.PLAYER);
-            if (s.lives <= 0) {
-                s.isDead = true;
-                soundManager.stopBGM();
-                soundManager.playLose();
-                showOverlay("MISSION FAILED", `You destroyed ${s.score / 100} bots, but your tank was lost. Restart the campaign?`, "RETRY");
+            if (s.player.guardTimer > performance.now()) {
+                b.active = false;
+                spawnExplosion(b.visualY, b.visualX, '#ffffff');
             } else {
-                setTimeout(() => {
-                    s.player.alive = true;
-                    s.player.r = s.gridSize - 2;
-                    s.player.c = Math.floor(s.gridSize / 2);
-                }, 1000);
+                s.player.alive = false;
+                b.active = false;
+                s.lives--;
+                soundManager.playKillPlayer();
+                spawnExplosion(s.player.r, s.player.c, TANK_COLORS.PLAYER);
+                if (s.lives <= 0) {
+                    s.isDead = true;
+                    soundManager.stopBGM();
+                    soundManager.playLose();
+                    showOverlay("MISSION FAILED", `You destroyed ${s.score / 100} bots, but your tank was lost. Restart the campaign?`, "RETRY");
+                } else {
+                    setTimeout(() => {
+                        s.player.alive = true;
+                        s.player.guardTimer = performance.now() + 5000;
+                        s.player.r = s.gridSize - 2;
+                        s.player.c = Math.floor(s.gridSize / 2);
+                    }, 1000);
+                }
             }
             updateHUD();
         } else if (b.owner === 'player') {
