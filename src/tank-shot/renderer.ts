@@ -261,14 +261,14 @@ function drawWall(r: number, c: number, type: WallType) {
     if (type === WallType.PERMANENT) {
         // Metallic Reinforced Plate
         const grad = ctx.createLinearGradient(x, y, x + cs, y + cs);
-        grad.addColorStop(0, '#1e293b');
-        grad.addColorStop(0.5, '#475569');
-        grad.addColorStop(1, '#0f172a');
+        grad.addColorStop(0, '#0f172a');
+        grad.addColorStop(0.5, '#334155');
+        grad.addColorStop(1, '#020617');
         ctx.fillStyle = grad;
         ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
 
         // Steel frame
-        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeStyle = '#475569';
         ctx.lineWidth = 2;
         ctx.strokeRect(x + 4, y + 4, cs - 8, cs - 8);
 
@@ -316,8 +316,8 @@ function drawWall(r: number, c: number, type: WallType) {
                 const finalW = drawW - (finalX - bx);
 
                 const bGrad = ctx.createLinearGradient(finalX, by, finalX, by + bh);
-                bGrad.addColorStop(0, '#92400e');
-                bGrad.addColorStop(1, '#78350f');
+                bGrad.addColorStop(0, '#7c2d12');
+                bGrad.addColorStop(1, '#451a03');
                 
                 ctx.fillStyle = bGrad;
                 ctx.fillRect(finalX, by, finalW, bh - 1);
@@ -350,7 +350,7 @@ export function render(ts: number) {
     ctx.translate(sx, sy);
 
     // Draw Grid / Floor
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.4)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= s.gridSize; i++) {
         // Horizontal lines

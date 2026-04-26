@@ -6,7 +6,7 @@ export class SoundManager {
     private bgm: HTMLAudioElement | null = null;
 
     constructor() {
-        this.bgm = new Audio("https://upload.wikimedia.org/wikipedia/commons/5/51/8bit_Dungeon_Boss_%28ISRC_USUAN1200067%29.mp3");
+        this.bgm = new Audio("https://upload.wikimedia.org/wikipedia/commons/6/63/Mechanolith_%28ISRC_USUAN1100879%29.mp3");
         this.bgm.loop = true;
         this.bgm.volume = 0.4;
     }
