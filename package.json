@@ -1,7 +1,7 @@
 {
   "name": "minigameboard",
   "version": "1.0.0",
-  "description": "",
+  "description": "A collection of high-quality mini games, featuring Tank Shot: a dark, intense tactical tank combat game.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,8 +12,15 @@
     "type": "git",
     "url": "git+https://github.com/nmhillusion/miniGameBoard.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "tank",
+    "game",
+    "action",
+    "chiptune",
+    "tactical",
+    "mini-game"
+  ],
+  "author": "nmhillusion",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
