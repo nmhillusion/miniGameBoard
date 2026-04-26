@@ -2,13 +2,13 @@ import { state as gameContainer, Tank, Item } from './state.js';
 import { Direction, DIR_VECTORS, WallType } from './constants.js';
 import { tryMove, shoot } from './game.js';
 
-function canSeeTarget(bot: Tank, tr: number, tc: number, grid: WallType[][], ignoreDestructible: boolean = false): boolean {
+function canSeeTarget(bot: Tank, tr: number, tc: number, grid: WallType[][], ignoreDestructible: boolean = false, ignorePermanent: boolean = false): boolean {
     if (bot.r === tr) {
         const start = Math.min(bot.c, tc);
         const end = Math.max(bot.c, tc);
         for (let c = start + 1; c < end; c++) {
             const wall = grid[bot.r][c];
-            if (wall === WallType.PERMANENT) return false;
+            if (wall === WallType.PERMANENT && !ignorePermanent) return false;
             if (!ignoreDestructible && wall === WallType.DESTRUCTIBLE) return false;
         }
         return true;
@@ -18,7 +18,7 @@ function canSeeTarget(bot: Tank, tr: number, tc: number, grid: WallType[][], ign
         const end = Math.max(bot.r, tr);
         for (let r = start + 1; r < end; r++) {
             const wall = grid[r][bot.c];
-            if (wall === WallType.PERMANENT) return false;
+            if (wall === WallType.PERMANENT && !ignorePermanent) return false;
             if (!ignoreDestructible && wall === WallType.DESTRUCTIBLE) return false;
         }
         return true;
@@ -60,10 +60,10 @@ export function updateBots(ts: number) {
         if (now - bot.lastAction > actionDelay) {
             const distToPlayer = Math.hypot(bot.r - s.player.r, bot.c - s.player.c);
             
-            // 1. Target Selection based on Class
             let targetR = s.player.r;
             let targetC = s.player.c;
             let isTargetingPlayer = true;
+            let targetType: 'player' | 'heart' | 'bomb' | 'powerup' = 'player';
 
             // Heart Protection Logic: Bots block hearts if player is nearby
             const hearts = s.items.filter(i => i.alive && i.type === 'heart');
@@ -74,6 +74,7 @@ export function updateBots(ts: number) {
                 targetR = threatenedHeart.r;
                 targetC = threatenedHeart.c;
                 isTargetingPlayer = false;
+                targetType = 'heart';
             } else if (bot.botClass !== 'heavy') {
                 // Scouts and Tacticians look for powerups to collect
                 const nearbyPowerup = s.items
@@ -86,6 +87,7 @@ export function updateBots(ts: number) {
                     targetR = nearbyPowerup.r;
                     targetC = nearbyPowerup.c;
                     isTargetingPlayer = false;
+                    targetType = 'powerup';
                 }
             }
 
@@ -100,16 +102,19 @@ export function updateBots(ts: number) {
                     targetR = nearbyBomb.r;
                     targetC = nearbyBomb.c;
                     isTargetingPlayer = false;
+                    targetType = 'bomb';
                 }
             }
 
-            const hasLOS = canSeeTarget(bot, targetR, targetC, s.grid);
+            const canShootThroughPerm = bot.powerType === 'penetrating';
+            const hasLOS = canSeeTarget(bot, targetR, targetC, s.grid, false, canShootThroughPerm);
             const canSenseThroughWalls = distToPlayer < 10 || bot.botClass === 'heavy' || bot.powerType === 'penetrating';
-            const hasLOSThroughWalls = canSenseThroughWalls && canSeeTarget(bot, targetR, targetC, s.grid, true);
+            const hasLOSThroughWalls = canSenseThroughWalls && canSeeTarget(bot, targetR, targetC, s.grid, true, canShootThroughPerm);
 
             let acted = false;
+            const isShootableTarget = targetType === 'player' || targetType === 'bomb';
 
-            if (hasLOS || (hasLOSThroughWalls && isTargetingPlayer)) {
+            if ((hasLOS || (hasLOSThroughWalls && isTargetingPlayer)) && isShootableTarget) {
                 // ATTACK/TRIGGER MODE
                 if (bot.r === targetR) {
                     const dir = targetC > bot.c ? Direction.RIGHT : Direction.LEFT;
@@ -160,9 +165,9 @@ export function updateBots(ts: number) {
                         }
                         tryMove(bot, dir);
                         return true;
-                    } else if (block === WallType.DESTRUCTIBLE) {
+                    } else if (block === WallType.DESTRUCTIBLE || (block === WallType.PERMANENT && bot.powerType === 'penetrating')) {
                         // High chance to blast through
-                        const blastChance = bot.botClass === 'heavy' ? 1.0 : (bot.botClass === 'tactician' ? 0.9 : 0.7);
+                        const blastChance = bot.botClass === 'heavy' || bot.powerType === 'penetrating' ? 1.0 : (bot.botClass === 'tactician' ? 0.9 : 0.7);
                         if (Math.random() < blastChance) {
                             if (bot.dir !== dir) bot.dir = dir;
                             else shoot(bot);
