@@ -57,14 +57,12 @@ document.getElementById("btn-home")?.addEventListener("click", () => {
 
 document.getElementById("btn-mute-music")?.addEventListener("click", (e) => {
     const muted = soundManager.toggleMusicMute();
-    const btn = e.currentTarget as HTMLButtonElement;
-    btn.style.opacity = muted ? "0.5" : "1";
+    (e.currentTarget as HTMLElement).classList.toggle("muted", muted);
 });
 
 document.getElementById("btn-mute-sfx")?.addEventListener("click", (e) => {
     const muted = soundManager.toggleSFXMute();
-    const btn = e.currentTarget as HTMLButtonElement;
-    btn.style.opacity = muted ? "0.5" : "1";
+    (e.currentTarget as HTMLElement).classList.toggle("muted", muted);
 });
 
 export function handleOverlayAction() {

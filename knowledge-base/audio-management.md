@@ -255,23 +255,18 @@ The `SoundManager.init()` is called lazily inside each `play*()` method, so it a
 
 ## 6. Mute Controls
 
-### Separate Music & SFX Mutes (Tank Shot)
+Every game **must** provide separate controls for Music and SFX muting to give players full control over the audio experience.
+
 ```typescript
+// Wiring in main.ts
 document.getElementById("btn-mute-music")?.addEventListener("click", (e) => {
     const muted = soundManager.toggleMusicMute();
-    (e.currentTarget as HTMLButtonElement).style.opacity = muted ? "0.5" : "1";
+    (e.currentTarget as HTMLButtonElement).classList.toggle("muted", muted);
 });
+
 document.getElementById("btn-mute-sfx")?.addEventListener("click", (e) => {
     const muted = soundManager.toggleSFXMute();
-    (e.currentTarget as HTMLButtonElement).style.opacity = muted ? "0.5" : "1";
-});
-```
-
-### Single Mute Toggle (Dark Maze)
-```typescript
-document.getElementById("btn-mute")?.addEventListener("click", () => {
-    const muted = toggleMute();
-    document.getElementById("btn-mute")!.textContent = muted ? "🔇" : "🔊";
+    (e.currentTarget as HTMLButtonElement).classList.toggle("muted", muted);
 });
 ```
 

@@ -22,7 +22,8 @@
   gap: 8px;
 }
 #btn-home,
-#btn-mute {
+#btn-mute-music,
+#btn-mute-sfx {
   background: rgba(20, 20, 32, 0.7);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -39,9 +40,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 #btn-home:active,
-#btn-mute:active {
+#btn-mute-music:active,
+#btn-mute-sfx:active {
   transform: scale(0.9);
   background: rgba(128, 200, 255, 0.3);
+}
+.muted {
+  opacity: 0.5;
 }
 
 #hud {

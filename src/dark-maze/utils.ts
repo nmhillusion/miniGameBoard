@@ -146,17 +146,43 @@ export function shakeScreen(dur: number = 400, intensity: number = 8) {
 }
 
 let audioCtx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+
 function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+  }
   return audioCtx;
 }
 
+let isMusicMuted = false;
+let isSFXMuted = false;
+
+export function toggleMusicMute() {
+  isMusicMuted = !isMusicMuted;
+  if (bgm) {
+    bgm.muted = isMusicMuted;
+  }
+  return isMusicMuted;
+}
+
+export function toggleSFXMute() {
+  isSFXMuted = !isSFXMuted;
+  if (masterGain) {
+    masterGain.gain.value = isSFXMuted ? 0 : 1;
+  }
+  return isSFXMuted;
+}
+
 export function playSound(type: "move" | "explosion" | "win" | "lose" | "damage") {
+  if (isSFXMuted) return;
   const ctx = getAudioCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(masterGain!);
 
   const now = ctx.currentTime;
 
@@ -206,15 +232,6 @@ export function playSound(type: "move" | "explosion" | "win" | "lose" | "damage"
 
 let musicStarted = false;
 let bgm: HTMLAudioElement | null = null;
-let isMuted = false;
-
-export function toggleMute() {
-  isMuted = !isMuted;
-  if (bgm) {
-    bgm.muted = isMuted;
-  }
-  return isMuted;
-}
 
 export function startMusic() {
   if (musicStarted && bgm && !bgm.paused) return;
@@ -226,7 +243,7 @@ export function startMusic() {
     bgm.loop = true;
     bgm.volume = 0.4;
   }
-  bgm.muted = isMuted;
+  bgm.muted = isMusicMuted;
   bgm.play().catch(e => console.error("Audio play failed:", e));
   
   musicStarted = true;
@@ -234,7 +251,6 @@ export function startMusic() {
 
 export function stopMusic() {
   if (!musicStarted || !bgm) return;
-  console.log("Stopping music...");
   bgm.pause();
   bgm.currentTime = 0;
   musicStarted = false;

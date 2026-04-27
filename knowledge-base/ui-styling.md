@@ -170,7 +170,7 @@ export function updateHUD() {
 
 ## 5. Top Bar (Navigation Buttons)
 
-Both games have a top-left/top-right bar with icon buttons:
+Every game **must** include a top bar with exactly 3 buttons for a consistent user experience:
 
 ```pug
 #top-bar
@@ -196,11 +196,12 @@ Both games have a top-left/top-right bar with icon buttons:
     border-radius: 0.5rem;
     cursor: pointer;
     font-size: 1.2rem;
-    transition: background 0.2s;
+    transition: background 0.2s, opacity 0.2s;
     -webkit-tap-highlight-color: transparent;
 
     &:hover { background: #334155; }
     &:active { transform: scale(0.9); }
+    &.muted { opacity: 0.5; }
   }
 }
 ```
@@ -356,7 +357,8 @@ html(lang="en")
     #game-root
       #top-bar
         button#btn-home(title="Home") 🏠
-        button#btn-mute(title="Mute") 🔊
+        button#btn-mute-music(title="Mute Music") 🎵
+        button#btn-mute-sfx(title="Mute SFX") 🔫
       #hud
         .hud-item
           span.hud-label Level

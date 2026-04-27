@@ -1,7 +1,7 @@
 import { state as game, GameState } from './state.js';
 import { initLevel, updateHUD, setMsg } from './game.js';
 import { setContext, render } from './renderer.js';
-import { startMusic, toggleMute } from './utils.js';
+import { startMusic, toggleMusicMute, toggleSFXMute } from './utils.js';
 import { initInputs } from './input.js';
 
 const canvas = document.getElementById("gc") as HTMLCanvasElement;
@@ -43,8 +43,12 @@ document.getElementById("btn-home")?.addEventListener("click", () => {
   window.location.href = "/index.html";
 });
 
-document.getElementById("btn-mute")?.addEventListener("click", () => {
-  const muted = toggleMute();
-  const btn = document.getElementById("btn-mute");
-  if (btn) btn.textContent = muted ? "🔇" : "🔊";
+document.getElementById("btn-mute-music")?.addEventListener("click", (e) => {
+  const muted = toggleMusicMute();
+  (e.currentTarget as HTMLElement).classList.toggle("muted", muted);
+});
+
+document.getElementById("btn-mute-sfx")?.addEventListener("click", (e) => {
+  const muted = toggleSFXMute();
+  (e.currentTarget as HTMLElement).classList.toggle("muted", muted);
 });

@@ -40,7 +40,7 @@ Owns the canvas element and the bridge between HTML and the game engine. It:
 - Obtains the `<canvas>` element and its `2d` context.
 - Calls `setContext(ctx)` to pass the context to `renderer.ts`.
 - Defines and invokes `resizeCanvas()`, binding it to `window.resize`.
-- Wires DOM event listeners for overlay buttons (`#ov-btn`), home (`#btn-home`), and mute toggles.
+- Wires DOM event listeners for overlay buttons (`#ov-btn`), home (`#btn-home`), music mute (`#btn-mute-music`), and sfx mute (`#btn-mute-sfx`).
 - Exports `handleOverlayAction()` which handles start/restart/next-level transitions.
 - Starts the `requestAnimationFrame` loop by calling `render()`.
 
